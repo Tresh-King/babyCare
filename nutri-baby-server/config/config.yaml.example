@@ -6,11 +6,11 @@
   base_url: ""
 
 database:
-  host: localhost
+  host: "" # 初始保持为空，强制读取环境变量
   port: 5432
   user: postgres
   password: ""
-  dbname: nutri_baby
+  dbname: postgres # 默认对齐 Supabase
   sslmode: disable
   timezone: Asia/Shanghai
   max_open_conns: 100
