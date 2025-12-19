@@ -179,8 +179,8 @@ func Load(configPath string) (*Config, error) {
 	// 1. 获取默认配置作为基础结构和默认值
 	defaultCfg := GetDefaultConfig()
 
-	// 2. 设置 Viper 基础规则
-	v := viper.GetViper()
+	// 2. 设置 Viper 基础规则 (使用独立实例避免全局干扰)
+	v := viper.New()
 	v.SetEnvPrefix("") // 移除 NB_ 前缀，回归标准环境变量名以匹配用户现有云端配置
 	v.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
 	v.AutomaticEnv()
@@ -209,16 +209,20 @@ func Load(configPath string) (*Config, error) {
 		}
 	}
 
-	// 调试：打印 Viper 当前识别到的数据库配置（合并后）
-	fmt.Printf("Viper Debug - Database Host: %s\n", v.GetString("database.host"))
-	fmt.Printf("Viper Debug - Database User: %s\n", v.GetString("database.user"))
-	fmt.Printf("Viper Debug - Database DBNAME: %s\n", v.GetString("database.dbname"))
-	fmt.Printf("Viper Debug - Port Env: %s\n", os.Getenv("DATABASE_PORT"))
+	// 调试：在 Unmarshal 前打印识别到的值
+	fmt.Printf("Viper Debug (Pre-Unmarshal) - Database Host: %s\n", v.GetString("database.host"))
+	fmt.Printf("Viper Debug (Pre-Unmarshal) - Database User: %s\n", v.GetString("database.user"))
+	fmt.Printf("Viper Debug (Pre-Unmarshal) - Database DBNAME: %s\n", v.GetString("database.dbname"))
+	fmt.Printf("Viper Debug (Pre-Unmarshal) - Port Env: %s\n", os.Getenv("DATABASE_PORT"))
 
 	// 5. 将所有来源合并到 defaultCfg 结构体中
 	if err := v.Unmarshal(defaultCfg); err != nil {
 		return nil, fmt.Errorf("failed to unmarshal config: %w", err)
 	}
+
+	// 调试：在 Unmarshal 后打印结构体中的实际值
+	fmt.Printf("Viper Debug (After Unmarshal) - Struct Host: %s\n", defaultCfg.Database.Host)
+	fmt.Printf("Viper Debug (After Unmarshal) - Struct User: %s\n", defaultCfg.Database.User)
 
 	// 6. 最终检查：如果数据库主机为空，说明映射完全失败
 	if defaultCfg.Database.Host == "" {
@@ -259,6 +263,12 @@ func bindAllEnvVars(v *viper.Viper, i interface{}, prefix string) {
 		// Bind the environment variable for the current key
 		// Viper automatically converts "parent.child" to "PARENT_CHILD" for env vars
 		_ = v.BindEnv(currentKey)
+
+		// 核心修复：如果环境变量中有值，显式设置到 Viper 中
+		// 这样 Unmarshal 过程才能确保命中这些来自环境的值（即使 YAML 中没有对应项）
+		if val := v.Get(currentKey); val != nil {
+			v.Set(currentKey, val)
+		}
 
 		// Recursively call for nested structs
 		if fieldVal.Kind() == reflect.Struct {
