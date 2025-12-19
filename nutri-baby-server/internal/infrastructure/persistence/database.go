@@ -24,6 +24,8 @@ func NewDatabase(cfg *config.Config) (*gorm.DB, error) {
 		},
 		// 禁用外键约束检查，避免迁移顺序问题
 		DisableForeignKeyConstraintWhenMigrating: true,
+		// 针对 Supabase Transaction Pooler，必须关闭预处理语句缓存
+		PrepareStmt: false,
 	}
 
 	// 连接数据库
@@ -45,7 +47,8 @@ func NewDatabase(cfg *config.Config) (*gorm.DB, error) {
 
 	// 自动迁移
 	if err := autoMigrate(db); err != nil {
-		return nil, fmt.Errorf("failed to auto migrate: %w", err)
+		// 宽容处理：迁移失败（如表已存在）仅记录错误日志，不阻止程序启动
+		logger.Error("Database auto migrate failed (non-fatal)", zap.Error(err))
 	}
 
 	logger.Info("Database connected successfully")
