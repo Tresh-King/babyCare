@@ -180,6 +180,7 @@ func Load(configPath string) (*Config, error) {
 
 	// 2. 设置 Viper 基础规则
 	v := viper.GetViper()
+	v.SetEnvPrefix("NB") // 关键：使用 NB_ 前缀隔离系统变量
 	v.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
 	v.AutomaticEnv()
 	v.SetConfigType("yaml")
@@ -210,6 +211,12 @@ func Load(configPath string) (*Config, error) {
 	// 5. 将所有来源合并到 defaultCfg 结构体中
 	if err := v.Unmarshal(defaultCfg); err != nil {
 		return nil, fmt.Errorf("failed to unmarshal config: %w", err)
+	}
+
+	// 6. 云端环境自检：如果 host 依然是 localhost，打印诊断信息
+	if defaultCfg.Database.Host == "localhost" {
+		fmt.Printf("DEBUG: Database Host is still localhost! Check prefix NB_DATABASE_HOST\n")
+		fmt.Printf("ENV TEST (NB_DATABASE_USER): %s\n", v.GetString("database.user"))
 	}
 
 	return defaultCfg, nil
