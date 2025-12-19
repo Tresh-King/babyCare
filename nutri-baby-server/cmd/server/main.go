@@ -55,8 +55,13 @@ func main() {
 	defer app.Scheduler.Stop()
 
 	// 启动HTTP服务器
+	port := cfg.Server.Port
+	if envPort := os.Getenv("PORT"); envPort != "" {
+		fmt.Sscanf(envPort, "%d", &port)
+	}
+
 	server := &http.Server{
-		Addr:         fmt.Sprintf(":%d", cfg.Server.Port),
+		Addr:         fmt.Sprintf(":%d", port),
 		Handler:      app.Router,
 		ReadTimeout:  time.Duration(cfg.Server.ReadTimeout) * time.Second,
 		WriteTimeout: time.Duration(cfg.Server.WriteTimeout) * time.Second,
