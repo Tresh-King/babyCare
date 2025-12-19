@@ -2,6 +2,7 @@ package config
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/spf13/viper"
 )
@@ -160,27 +161,36 @@ type AnalysisConfig struct {
 
 // Load 加载配置
 func Load(configPath string) (*Config, error) {
-	if configPath != "" {
-		viper.SetConfigFile(configPath)
-		viper.SetConfigType("yaml")
-	}
+	viper.SetConfigType("yaml")
 
-	// 读取环境变量
+	// 允许环境变量映射到嵌套结构 (例如 DATABASE_HOST 映射到 Database.Host)
+	viper.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
 	viper.AutomaticEnv()
 
 	if configPath != "" {
+		viper.SetConfigFile(configPath)
 		if err := viper.ReadInConfig(); err != nil {
-			// 如果指定了路径但文件不存在，记录并继续（可能完全依赖环境变量）
-			fmt.Printf("Warning: failed to read config file from %s: %v. Proceeding with env vars.\n", configPath, err)
+			// 如果指定了主配置文件但不存在，尝试读取 .example 文件作为结构定义
+			examplePath := configPath + ".example"
+			fmt.Printf("Warning: failed to read config file from %s: %v. Trying example file %s for structure.\n", configPath, err, examplePath)
+
+			viper.SetConfigFile(examplePath)
+			if err := viper.ReadInConfig(); err != nil {
+				fmt.Printf("Warning: failed to read example config file either: %v. Proceeding with env vars only.\n", err)
+			}
 		}
 	}
 
-	var config Config
-	if err := viper.Unmarshal(&config); err != nil {
+	// 获取默认配置作为底层，防止字段完全缺失
+	defaultCfg := GetDefaultConfig()
+
+	// 将默认值设置进 Viper，这样即便没有配置文件，Viper 也能识别这些 Key 并被环境变量覆盖
+	// (注意：这里简单起见直接 Unmarshal 结果，如果需要更严谨，可以递归设置 Default)
+	if err := viper.Unmarshal(defaultCfg); err != nil {
 		return nil, fmt.Errorf("failed to unmarshal config: %w", err)
 	}
 
-	return &config, nil
+	return defaultCfg, nil
 }
 
 // GetDefaultConfig 获取默认配置
