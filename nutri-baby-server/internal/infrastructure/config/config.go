@@ -63,6 +63,8 @@ func (d DatabaseConfig) DSN() string {
 	q := u.Query()
 	q.Set("sslmode", d.SSLMode)
 	q.Set("prepareThreshold", "0")
+	// 强制使用简单查询协议，解决 Supabase Transaction Pooler 不支持扩展协议的问题 (Code 2002)
+	q.Set("default_query_exec_mode", "simple_protocol")
 	if d.Timezone != "" {
 		q.Set("timezone", d.Timezone)
 	}
