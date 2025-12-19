@@ -160,14 +160,19 @@ type AnalysisConfig struct {
 
 // Load 加载配置
 func Load(configPath string) (*Config, error) {
-	viper.SetConfigFile(configPath)
-	viper.SetConfigType("yaml")
+	if configPath != "" {
+		viper.SetConfigFile(configPath)
+		viper.SetConfigType("yaml")
+	}
 
 	// 读取环境变量
 	viper.AutomaticEnv()
 
-	if err := viper.ReadInConfig(); err != nil {
-		return nil, fmt.Errorf("failed to read config: %w", err)
+	if configPath != "" {
+		if err := viper.ReadInConfig(); err != nil {
+			// 如果指定了路径但文件不存在，记录并继续（可能完全依赖环境变量）
+			fmt.Printf("Warning: failed to read config file from %s: %v. Proceeding with env vars.\n", configPath, err)
+		}
 	}
 
 	var config Config

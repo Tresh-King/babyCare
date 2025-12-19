@@ -36,6 +36,7 @@ RUN apk --no-cache add ca-certificates tzdata
 
 # 复制后端可执行文件和配置模板
 COPY --from=backend-builder /app/nutri-baby-server .
+RUN mkdir -p config
 COPY --from=backend-builder /app/config ./config
 
 # 复制前端静态资源到后端识别的 dist 目录

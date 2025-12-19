@@ -111,20 +111,6 @@ func loadConfigWithFallback(flagPath string) (*config.Config, error) {
 	// 优先级3: 默认值
 	defaultPath := "config/config.yaml"
 
-	// 检查配置文件是否存在
-	if _, err := os.Stat(defaultPath); err != nil {
-		if os.IsNotExist(err) {
-			return nil, fmt.Errorf(
-				"configuration file not found\n"+
-					"Please specify config path using one of these methods:\n"+
-					"  1. Command line flag: -config /path/to/config.yaml\n"+
-					"  2. Environment variable: export NUTRI_BABY_CONFIG=/path/to/config.yaml\n"+
-					"  3. Default path: %s",
-				defaultPath,
-			)
-		}
-		return nil, fmt.Errorf("failed to stat config file: %w", err)
-	}
-
+	// 注意：config.Load 现在已经可以处理文件不存在的情况（通过环境变量注入）
 	return config.Load(defaultPath)
 }
