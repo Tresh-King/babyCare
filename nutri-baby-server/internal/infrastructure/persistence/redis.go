@@ -2,6 +2,7 @@ package persistence
 
 import (
 	"context"
+	"crypto/tls"
 	"fmt"
 
 	"github.com/redis/go-redis/v9"
@@ -12,12 +13,22 @@ import (
 
 // NewRedis 创建Redis客户端
 func NewRedis(cfg *config.Config) (*redis.Client, error) {
-	client := redis.NewClient(&redis.Options{
+	opts := &redis.Options{
 		Addr:     cfg.Redis.Addr(),
 		Password: cfg.Redis.Password,
 		DB:       cfg.Redis.DB,
 		PoolSize: cfg.Redis.PoolSize,
-	})
+	}
+
+	// 如果开启了 TLS，或者地址包含 upstash.io (通常需要 TLS)，则配置 TLSConfig
+	if cfg.Redis.UseTLS {
+		opts.TLSConfig = &tls.Config{
+			MinVersion: tls.VersionTLS12,
+			ServerName: cfg.Redis.Host,
+		}
+	}
+
+	client := redis.NewClient(opts)
 
 	// 测试连接
 	ctx := context.Background()

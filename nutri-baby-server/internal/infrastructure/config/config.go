@@ -78,6 +78,7 @@ type RedisConfig struct {
 	Password string `mapstructure:"password"`
 	DB       int    `mapstructure:"db"`
 	PoolSize int    `mapstructure:"pool_size"`
+	UseTLS   bool   `mapstructure:"use_tls"`
 }
 
 // Addr 返回Redis地址
@@ -217,6 +218,7 @@ func Load(configPath string) (*Config, error) {
 	fmt.Printf("Viper Debug (Pre-Unmarshal) - Port Env (Direct): %s\n", os.Getenv("DATABASE_PORT"))
 	fmt.Printf("Viper Debug (Pre-Unmarshal) - SSLMode: %s\n", v.GetString("database.sslmode"))
 	fmt.Printf("Viper Debug (Pre-Unmarshal) - Timezone: %s\n", v.GetString("database.timezone"))
+	fmt.Printf("Viper Debug (Pre-Unmarshal) - Redis UseTLS: %v\n", v.GetBool("redis.use_tls"))
 
 	// 5. 将所有来源合并到 defaultCfg 结构体中
 	if err := v.Unmarshal(defaultCfg); err != nil {
