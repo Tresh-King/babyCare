@@ -185,14 +185,15 @@ func NewRouter(
 					c.JSON(200, gin.H{"message": "处理完成"})
 				})
 			}
+		}
 	}
-	
+
 	// 静态文件服务 - 前端 H5 项目
 	// 只有在存在 ./dist 目录时才启用
 	r.Static("/static", "./dist/static")
 	r.StaticFile("/favicon.ico", "./dist/favicon.ico")
 	r.StaticFile("/index.html", "./dist/index.html")
-	
+
 	// 处理 SPA 路由：所有非 API 请求都返回 index.html
 	r.NoRoute(func(c *gin.Context) {
 		c.File("./dist/index.html")
