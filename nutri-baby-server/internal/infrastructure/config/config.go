@@ -19,7 +19,8 @@ type Config struct {
 	Log      LogConfig      `mapstructure:"log"`
 	Upload   UploadConfig   `mapstructure:"upload"`
 	Wechat   WechatConfig   `mapstructure:"wechat"`
-	AI       AIConfig       `mapstructure:"ai"` // AI配置
+	COS      COSConfig      `mapstructure:"cos"` // COS配置
+	AI       AIConfig       `mapstructure:"ai"`  // AI配置
 }
 
 // ServerConfig 服务器配置
@@ -116,6 +117,13 @@ type WechatConfig struct {
 	AppID              string            `mapstructure:"app_id"`
 	AppSecret          string            `mapstructure:"app_secret"`
 	SubscribeTemplates map[string]string `mapstructure:"subscribe_templates"` // 订阅消息模板映射: templateType -> templateID
+}
+
+// COSConfig 腾讯云COS配置
+type COSConfig struct {
+	BucketURL string `mapstructure:"bucket_url"`
+	SecretID  string `mapstructure:"secret_id"`
+	SecretKey string `mapstructure:"secret_key"`
 }
 
 // AIConfig AI配置
@@ -352,6 +360,11 @@ func GetDefaultConfig() *Config {
 			AppID:              "",
 			AppSecret:          "",
 			SubscribeTemplates: map[string]string{},
+		},
+		COS: COSConfig{
+			BucketURL: "",
+			SecretID:  "",
+			SecretKey: "",
 		},
 		AI: GetDefaultAIConfig(),
 	}

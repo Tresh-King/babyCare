@@ -1,13 +1,16 @@
 /**
  * HTTP 请求工具
+ * 支持 微信云托管 callContainer 和 普通 HTTPS 降级
  */
 
 import type { ApiResponse } from '@/types'
 import { StorageKeys, getStorage } from '@/utils/storage'
 
-// API 基础配置
+// 环境变量
+const CLOUD_ENV_ID = import.meta.env.VITE_WX_CLOUD_ENV_ID
+const SERVICE_NAME = import.meta.env.VITE_WX_SERVICE_NAME
 const BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://api.example.com'
-const TIMEOUT = 120000 // 2分钟超时，用于AI分析等长时间请求
+const TIMEOUT = 120000 // 2分钟超时
 
 /**
  * 请求配置接口
@@ -18,9 +21,9 @@ interface RequestConfig {
   data?: any
   header?: Record<string, string>
   timeout?: number
-  retry?: number // 重试次数
-  retryDelay?: number // 重试延迟（毫秒）
-  showError?: boolean // 是否显示错误提示
+  retry?: number
+  retryDelay?: number
+  showError?: boolean
 }
 
 /**
@@ -29,9 +32,9 @@ interface RequestConfig {
 function getHeaders(): Record<string, string> {
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
+    'X-WX-SERVICE': SERVICE_NAME, // 云托管服务名
   }
 
-  // 从本地存储获取 token (使用 getStorage 函数确保正确解析 JSON)
   const token = getStorage<string>(StorageKeys.TOKEN)
   if (token) {
     headers['Authorization'] = `Bearer ${token}`
@@ -76,17 +79,65 @@ export function request<T = any>(config: RequestConfig): Promise<ApiResponse<T>>
 }
 
 /**
- * 带重试的请求实现
+ * 核心请求适配器
  */
-function requestWithRetry<T = any>(
-  config: Omit<RequestConfig, 'retry' | 'retryDelay' | 'showError'>,
-  retriesLeft: number,
-  retryDelay: number,
-  showError: boolean,
-  attempt: number = 1
-): Promise<ApiResponse<T>> {
+function requestAdapter(config: Omit<RequestConfig, 'retry' | 'retryDelay' | 'showError'>): Promise<any> {
+  // 检查是否在微信小程序环境且配置了云环境ID
+  // @ts-ignore
+  const isWechatMp = typeof wx !== 'undefined' && !!wx.cloud
+
+  if (isWechatMp && CLOUD_ENV_ID) {
+    return new Promise((resolve, reject) => {
+      // @ts-ignore
+      wx.cloud.init({ env: CLOUD_ENV_ID }) // 确保初始化
+
+      // 构造云托管路径：/v1/auth/login
+      // callContainer 不需要完整的域名，只需要 path
+      let path = config.url
+      if (!path.startsWith('/')) {
+        path = '/' + path
+      }
+      // 确保包含 /v1 前缀 (如果 config.url 没带，这里需要根据后端路由决定)
+      // 我们的后端路由组是 /v1，且 request 调用时通常是 /auth/login
+      // 需要确认调用方是否带了 /v1。
+      // 观察之前的 BASE_URL 是 .../v1
+      // 说明调用方传的 config.url 可能是 /auth/login
+      // 所以这里需要手动加上 /v1 前缀
+      if (!path.startsWith('/v1')) {
+        path = '/v1' + path
+      }
+
+      // 处理 GET 请求参数拼接到 path
+      if (config.method === 'GET' && config.data) {
+        path += buildQueryString(config.data)
+      }
+
+      // @ts-ignore
+      wx.cloud.callContainer({
+        config: {
+          env: CLOUD_ENV_ID
+        },
+        path: path,
+        header: {
+          ...getHeaders(),
+          ...config.header
+        },
+        method: config.method || 'GET',
+        data: config.method === 'GET' ? undefined : config.data, // callContainer GET 不支持 data Payload
+        success: (res: any) => {
+          // callContainer 返回结构：{ data: ..., statusCode: ..., header: ... }
+          resolve(res)
+        },
+        fail: (err: any) => {
+          console.error('cloud.callContainer failed', err)
+          reject(err)
+        }
+      })
+    })
+  }
+
+  // 降级：标准 HTTPS 请求 (H5 / App / 未配置云环境)
   return new Promise((resolve, reject) => {
-    // 为 GET 请求构建查询字符串
     const finalUrl = config.method === 'GET'
       ? `${BASE_URL}${config.url}${buildQueryString(config.data)}`
       : `${BASE_URL}${config.url}`
@@ -100,148 +151,98 @@ function requestWithRetry<T = any>(
         ...config.header,
       },
       timeout: config.timeout || TIMEOUT,
-      success: (res) => {
-        const data = res.data as ApiResponse<T>
-
-        // 请求成功
-        if (res.statusCode === 200) {
-          if (data.code === 0) {
-            resolve(data)
-          } else {
-            // 业务错误
-            if (showError) {
-              uni.showToast({
-                title: data.message || '请求失败',
-                icon: 'none',
-                duration: 2000,
-              })
-            }
-            reject(data)
-          }
-        } else if (res.statusCode === 401) {
-          // token 过期,跳转登录
-          if (showError) {
-            uni.showToast({
-              title: '登录已过期,请重新登录',
-              icon: 'none',
-            })
-          }
-          // 清除 token
-          uni.removeStorageSync(StorageKeys.TOKEN)
-          // 跳转到登录页
-          setTimeout(() => {
-            uni.reLaunch({
-              url: '/pages/user/login',
-            })
-          }, 1500)
-          reject(data)
-        } else if (res.statusCode === 404) {
-          // 404错误不显示toast，让调用方处理
-          reject({ ...data, statusCode: 404 })
-        } else {
-          // HTTP 错误
-          if (showError) {
-            uni.showToast({
-              title: `请求失败: ${res.statusCode}`,
-              icon: 'none',
-            })
-          }
-          reject(data)
-        }
-      },
-      fail: async (err) => {
-        console.error(`request error (attempt ${attempt}):`, err)
-
-        // 如果还有重试次数，进行重试
-        if (retriesLeft > 0) {
-          console.log(`Retrying... (${retriesLeft} retries left)`)
-          await delay(retryDelay)
-          
-          try {
-            const result = await requestWithRetry<T>(
-              config,
-              retriesLeft - 1,
-              retryDelay,
-              showError,
-              attempt + 1
-            )
-            resolve(result)
-          } catch (retryError) {
-            reject(retryError)
-          }
-        } else {
-          // 没有重试次数了，显示错误
-          if (showError) {
-            uni.showToast({
-              title: '网络请求失败，请检查网络连接',
-              icon: 'none',
-              duration: 2000
-            })
-          }
-          reject(err)
-        }
-      },
+      success: resolve,
+      fail: reject
     })
   })
 }
 
 /**
- * GET 请求
+ * 带重试的请求实现
  */
+async function requestWithRetry<T = any>(
+  config: Omit<RequestConfig, 'retry' | 'retryDelay' | 'showError'>,
+  retriesLeft: number,
+  retryDelay: number,
+  showError: boolean,
+  attempt: number = 1
+): Promise<ApiResponse<T>> {
+  try {
+    const res: any = await requestAdapter(config)
+    const data = res.data as ApiResponse<T>
+
+    // 成功判断 (callContainer 和 uni.request statusCode 字段一致)
+    if (res.statusCode === 200) {
+      if (data.code === 0) {
+        return data
+      } else {
+        // 业务错误
+        if (showError) {
+          uni.showToast({
+            title: data.message || '请求失败',
+            icon: 'none',
+            duration: 2000,
+          })
+        }
+        throw data
+      }
+    } else if (res.statusCode === 401) {
+      if (showError) {
+        uni.showToast({ title: '登录已过期', icon: 'none' })
+      }
+      uni.removeStorageSync(StorageKeys.TOKEN)
+      setTimeout(() => {
+        uni.reLaunch({ url: '/pages/user/login' })
+      }, 1500)
+      throw data
+    } else if (res.statusCode === 404) {
+      throw { ...data, statusCode: 404 }
+    } else {
+      if (showError) {
+        uni.showToast({ title: `请求失败: ${res.statusCode}`, icon: 'none' })
+      }
+      throw data
+    }
+  } catch (err) {
+    // 重试逻辑
+    if (retriesLeft > 0) {
+      console.log(`Retrying... (${retriesLeft} left)`)
+      await delay(retryDelay)
+      return requestWithRetry<T>(config, retriesLeft - 1, retryDelay, showError, attempt + 1)
+    }
+    if (showError && !err.code) { // 避免重复报错 (err.code 存在说明是业务错误已报过)
+      uni.showToast({ title: '网络请求失败', icon: 'none' })
+    }
+    throw err
+  }
+}
+
+// 导出方法
 export function get<T = any>(url: string, data?: any): Promise<ApiResponse<T>> {
-  return request<T>({
-    url,
-    method: 'GET',
-    data,
-  })
+  return request<T>({ url, method: 'GET', data })
 }
 
-/**
- * POST 请求
- */
 export function post<T = any>(url: string, data?: any): Promise<ApiResponse<T>> {
-  return request<T>({
-    url,
-    method: 'POST',
-    data,
-  })
+  return request<T>({ url, method: 'POST', data })
 }
 
-/**
- * PUT 请求
- */
 export function put<T = any>(url: string, data?: any): Promise<ApiResponse<T>> {
-  return request<T>({
-    url,
-    method: 'PUT',
-    data,
-  })
+  return request<T>({ url, method: 'PUT', data })
 }
 
-/**
- * DELETE 请求
- */
 export function del<T = any>(url: string, data?: any): Promise<ApiResponse<T>> {
-  return request<T>({
-    url,
-    method: 'DELETE',
-    data,
-  })
+  return request<T>({ url, method: 'DELETE', data })
 }
 
 /**
- * 文件上传
+ * 文件上传 (适配云托管?)
+ * 云托管 callContainer 暂不支持直接 uploadFile，通常建议走 COS SDK 上传或 HTTPS 上传
+ * 这里保持 HTTPS 上传，或者后续改造为 COS 直传
  */
-interface UploadConfig {
-  filePath: string
-  name?: string
-  formData?: Record<string, string>
-}
-
-export function uploadFile(config: UploadConfig): Promise<any> {
+export function uploadFile(config: { filePath: string; name?: string; formData?: Record<string, string> }): Promise<any> {
   return new Promise((resolve, reject) => {
     uni.uploadFile({
-      url: `${BASE_URL}/upload`,
+      url: `${BASE_URL}/upload`, // 上传通常还是走 HTTPS 流，或者改造为 COS 签名上传
       filePath: config.filePath,
       name: config.name || 'file',
       formData: config.formData || {},
