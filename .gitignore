@@ -68,6 +68,8 @@ nutri-baby-app/.spec-workflow/
 nutri-baby-server/config/config.yaml
 nutri-baby-app/.env.development
 nutri-baby-app/.env.production
+env.json
+云托管报错.txt
 # 但允许提交模板文件
 !nutri-baby-server/config/*.example
 !nutri-baby-app/.env.*.example
