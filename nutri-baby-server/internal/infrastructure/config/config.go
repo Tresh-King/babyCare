@@ -2,6 +2,8 @@ package config
 
 import (
 	"fmt"
+	"net/url"
+	"reflect"
 	"strings"
 
 	"github.com/spf13/viper"
@@ -46,14 +48,26 @@ type DatabaseConfig struct {
 	EnableReadReplica bool     `mapstructure:"enable_read_replica"` // 是否启用读副本
 }
 
-// DSN 返回PostgreSQL连接字符串
+// DSN 返回PostgreSQL连接字符串 (使用 URL 格式以更好地支持连接池和特殊字符)
 func (d DatabaseConfig) DSN() string {
-	dsn := fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=%s",
-		d.Host, d.Port, d.User, d.Password, d.DBName, d.SSLMode)
-	if d.Timezone != "" {
-		dsn += " timezone=" + d.Timezone
+	// 针对 Supabase Pooler，使用 URL 格式且必须对用户名和密码进行转义
+	// 同时增加 prepareThreshold=0 禁用预处理语句，因为 Transaction Pooler 不支持它
+	u := &url.URL{
+		Scheme: "postgres",
+		User:   url.UserPassword(d.User, d.Password),
+		Host:   fmt.Sprintf("%s:%d", d.Host, d.Port),
+		Path:   d.DBName,
 	}
-	return dsn
+
+	q := u.Query()
+	q.Set("sslmode", d.SSLMode)
+	q.Set("prepareThreshold", "0")
+	if d.Timezone != "" {
+		q.Set("timezone", d.Timezone)
+	}
+	u.RawQuery = q.Encode()
+
+	return u.String()
 }
 
 // RedisConfig Redis配置
@@ -161,48 +175,85 @@ type AnalysisConfig struct {
 
 // Load 加载配置
 func Load(configPath string) (*Config, error) {
-	// 1. 获取默认配置作为基础结构
+	// 1. 获取默认配置作为基础结构和默认值
 	defaultCfg := GetDefaultConfig()
 
 	// 2. 设置 Viper 基础规则
-	viper.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
-	viper.AutomaticEnv()
-	viper.SetConfigType("yaml")
+	v := viper.GetViper()
+	v.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
+	v.AutomaticEnv()
+	v.SetConfigType("yaml")
 
-	// 3. 核心修复：通过默认值让 Viper 预知所有嵌套 Key
-	// 这能确保在没有物理 YAML 文件时，环境变量（如 REDIS_HOST）也能被正确识别
-	bindAllEnvVars(viper.GetViper(), defaultCfg, "")
+	// 3. 核心修复：深度递归绑定所有已知的配置项
+	// 这确保了即便不提供 YAML，Viper 也能识别出 DATABASE_HOST 等嵌套环境变量
+	bindAllEnvVars(v, defaultCfg, "")
 
-	// 4. 加载配置文件（优先级：指定路径 > 指定路径.example 模板）
+	// 4. 加载配置文件（优先级：指定路径 > .example 模板）
 	if configPath != "" {
-		viper.SetConfigFile(configPath)
-		if err := viper.ReadInConfig(); err != nil {
-			// 如果主配置不存在，尝试加载 .example 作为结构定义
+		v.SetConfigFile(configPath)
+		if err := v.ReadInConfig(); err != nil {
+			// 如果主配置加载失败（如不存在或解析错），尝试加载 .example 作为结构参考
 			examplePath := configPath + ".example"
-			viper.SetConfigFile(examplePath)
-			if err := viper.ReadInConfig(); err != nil {
-				fmt.Printf("Warning: Config file not found, and no example template exists. Relying on env vars.\n")
+			fmt.Printf("Warning: Primary config %s failed: %v. Trying example %s\n", configPath, err, examplePath)
+
+			v.SetConfigFile(examplePath)
+			if err := v.ReadInConfig(); err != nil {
+				fmt.Printf("Warning: Both config and example failed. Relying on env vars.\n")
 			} else {
-				fmt.Printf("Info: Loaded structure template from %s\n", examplePath)
+				fmt.Printf("Info: Successfully loaded structure from %s\n", examplePath)
 			}
+		} else {
+			fmt.Printf("Info: Successfully loaded config from %s\n", configPath)
 		}
 	}
 
-	// 5. 将解析结果反序列化到结构体中
-	if err := viper.Unmarshal(defaultCfg); err != nil {
+	// 5. 将所有来源合并到 defaultCfg 结构体中
+	if err := v.Unmarshal(defaultCfg); err != nil {
 		return nil, fmt.Errorf("failed to unmarshal config: %w", err)
 	}
 
 	return defaultCfg, nil
 }
 
-// bindAllEnvVars 深度递归绑定所有环境变量
-// 这能确保即使不提供 yaml 文件，Viper 也能识别出所有的嵌套 Key (如 DATABASE_HOST)
+// bindAllEnvVars 深度递归绑定结构体中的所有字段到 Viper
+// 这样即便没有 YAML 文件，Viper 也能知道该去读取哪些环境变量
 func bindAllEnvVars(v *viper.Viper, i interface{}, prefix string) {
-	// 使用反射或者简单的全员注册逻辑
-	// 这里我们通过设置一个空的默认值来让 Viper “知道”这些 Key
-	// 实际上，只要 Unmarshal 到了 defaultCfg，Viper 内部已经有了映射，
-	// 但显式绑定能让 AutomaticEnv 更稳定。
+	val := reflect.ValueOf(i)
+	if val.Kind() == reflect.Ptr {
+		val = val.Elem()
+	}
+
+	if val.Kind() != reflect.Struct {
+		return // Only process structs
+	}
+
+	typ := val.Type()
+	for i := 0; i < val.NumField(); i++ {
+		field := typ.Field(i)
+		fieldVal := val.Field(i)
+
+		// Get the mapstructure tag for the field name
+		tag := field.Tag.Get("mapstructure")
+		if tag == "" {
+			tag = strings.ToLower(field.Name) // Default to lowercase field name if no tag
+		}
+
+		currentKey := tag
+		if prefix != "" {
+			currentKey = prefix + "." + tag
+		}
+
+		// Bind the environment variable for the current key
+		// Viper automatically converts "parent.child" to "PARENT_CHILD" for env vars
+		_ = v.BindEnv(currentKey)
+
+		// Recursively call for nested structs
+		if fieldVal.Kind() == reflect.Struct {
+			bindAllEnvVars(v, fieldVal.Addr().Interface(), currentKey)
+		} else if fieldVal.Kind() == reflect.Ptr && fieldVal.Elem().Kind() == reflect.Struct {
+			bindAllEnvVars(v, fieldVal.Interface(), currentKey)
+		}
+	}
 }
 
 // GetDefaultConfig 获取默认配置
