@@ -187,9 +187,9 @@ const pageSize = ref(5);
 const isLoadingMore = ref(false);
 const hasMore = ref(true);
 const handleDateFilterChange = ({ value }: { value: "today" | "week" | "month" | "custom" }) => {
-  console.log("Date filter changed to:", value);
+  // console.log("Date filter changed to:", value);
   if (value === "custom") {
-    console.log("Opening custom date picker");
+    // console.log("Opening custom date picker");
     dateTimePickerRef.value?.open();
   }
   // 重置分页，重新加载数据
@@ -361,13 +361,13 @@ const loadRecords = async (isRefresh: boolean = false, pullDown: boolean = false
 
   // 防止重复加载
   if (isLoadingMore.value) {
-    console.log("[Timeline] 正在加载中，跳过重复请求");
+    // console.log("[Timeline] 正在加载中，跳过重复请求");
     return;
   }
 
   // 如果不是刷新且没有更多数据，直接返回
   if (!isRefresh && !hasMore.value) {
-    console.log("[Timeline] 没有更多数据，跳过加载");
+    // console.log("[Timeline] 没有更多数据，跳过加载");
     return;
   }
 
@@ -431,14 +431,14 @@ const loadRecords = async (isRefresh: boolean = false, pullDown: boolean = false
     // 判断是否还有更多数据：返回的数据少于请求的 pageSize，说明已经没有更多了
     hasMore.value = newItems.length >= pageSize.value;
 
-    console.log("[Timeline] 加载数据完成", {
+    /* console.log("[Timeline] 加载数据完成", {
       loadedPage: pageToLoad,
       nextPage: currentPage.value,
       newItemsCount: newItems.length,
       totalLoaded: timelineItems.value.length,
       total: response.data.total,
       hasMore: hasMore.value,
-    });
+    }); */
     
     if (pullDown) {
       uni.showToast({
@@ -498,10 +498,10 @@ onPullDownRefresh(async () => {
 
 // 页面滚动到底部时触发
 onReachBottom(() => {
-  console.log("[Timeline] onReachBottom 触发", {
+  /* console.log("[Timeline] onReachBottom 触发", {
     hasMore: hasMore.value,
     isLoadingMore: isLoadingMore.value,
-  });
+  }); */
 
   // loadRecords 内部已经有防重复加载的逻辑
   loadRecords(false);
@@ -509,7 +509,7 @@ onReachBottom(() => {
 
 // Wot UI 日期选择器的 confirm 事件处理
 const onDateConfirm = ({ value }: { value: number[] }) => {
-  console.log("[Timeline] 选择的日期时间戳范围:", value);
+  // console.log("[Timeline] 选择的日期时间戳范围:", value);
 
   if (!value || value.length === 0 || !value[0]) return;
 
@@ -601,7 +601,7 @@ const loadMoreState = computed<string>(() => {
 
 // 加载更多函数
 const loadMore = () => {
-  console.log("[Timeline] 点击重试加载");
+  // console.log("[Timeline] 点击重试加载");
   loadRecords(false);
 };
 

@@ -104,7 +104,7 @@ func (h *SubscribeHandler) Cancel(c *gin.Context) {
 		response.Error(c, errors.ErrUnauthorized)
 		return
 	}
-	fmt.Println(openid)
+
 	var req dto.CancelSubscriptionRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		h.logger.Warn("Invalid request", zap.Error(err))

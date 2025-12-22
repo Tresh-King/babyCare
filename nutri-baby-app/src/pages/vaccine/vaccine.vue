@@ -405,13 +405,13 @@ const loadVaccineData = async (isRefresh: boolean = false) => {
 
   // 防止重复加载
   if (isLoadingMore.value) {
-    console.log("正在加载中，跳过重复请求");
+    // console.log("正在加载中，跳过重复请求");
     return;
   }
 
   // 如果不是刷新且没有更多数据，直接返回
   if (!isRefresh && !hasMore.value) {
-    console.log("没有更多数据，跳过加载");
+    // console.log("没有更多数据，跳过加载");
     return;
   }
 
@@ -425,12 +425,12 @@ const loadVaccineData = async (isRefresh: boolean = false) => {
   const babyId = currentBaby.value.babyId;
   const pageToLoad = currentPage.value;
 
-  console.log("加载疫苗日程数据", {
-    babyId,
-    page: pageToLoad,
-    isRefresh,
-    status: activeTab.value === "all" ? undefined : activeTab.value,
-  });
+  // console.log("加载疫苗日程数据", {
+  //   babyId,
+  //   page: pageToLoad,
+  //   isRefresh,
+  //   status: activeTab.value === "all" ? undefined : activeTab.value,
+  // });
 
   try {
     isLoadingMore.value = true;
@@ -487,7 +487,7 @@ const loadVaccineData = async (isRefresh: boolean = false) => {
     const loadedCount = vaccineSchedules.value.length;
     hasMore.value = loadedCount < totalSchedules.value;
 
-    console.log("疫苗数据加载成功", {
+    /* console.log("疫苗数据加载成功", {
       tab: activeTab.value,
       loadedPage: pageToLoad,
       nextPage: currentPage.value,
@@ -496,7 +496,7 @@ const loadVaccineData = async (isRefresh: boolean = false) => {
       totalAllSchedules: vaccineStats.value.total,
       hasMore: hasMore.value,
       stats: vaccineStats.value,
-    });
+    }); */
   } catch (error) {
     console.error("加载疫苗数据失败:", error);
     // 确保即使出错也初始化为空数组
@@ -572,13 +572,13 @@ const loadMoreState = computed<string>(() => {
 
 // 监听 tab 变化，重新加载数据
 watch(activeTab, async () => {
-  console.log("Tab changed to:", activeTab.value);
+  // console.log("Tab changed to:", activeTab.value);
   await loadVaccineData(true);
 });
 
 // 加载更多函数
 const loadMore = () => {
-  console.log("[Vaccine] loadMore 触发");
+  // console.log("[Vaccine] loadMore 触发");
   if (hasMore.value && !isLoadingMore.value) {
     loadVaccineData(false);
   }
@@ -586,10 +586,10 @@ const loadMore = () => {
 
 // 页面滚动到底部时触发
 onReachBottom(() => {
-  console.log("[Vaccine] onReachBottom 触发", {
-    hasMore: hasMore.value,
-    isLoadingMore: isLoadingMore.value,
-  });
+  // console.log("[Vaccine] onReachBottom 触发", {
+  //   hasMore: hasMore.value,
+  //   isLoadingMore: isLoadingMore.value,
+  // });
 
   // loadVaccineData 内部已经有防重复加载的逻辑
   loadVaccineData(false);
@@ -657,7 +657,7 @@ const handleSkipSchedule = async (
 
 // 保存接种记录 (新架构)
 const handleSaveRecord = async () => {
-  console.log("handleSaveRecord", recordForm.value);
+  // console.log("handleSaveRecord", recordForm.value);
   if (!currentBaby.value || !userInfo.value) {
     uni.showToast({
       title: "请先登录",
@@ -722,7 +722,7 @@ const handleSaveRecord = async () => {
 // 处理订阅消息结果
 const handleSubscribeResult = (result: "accept" | "reject") => {
   if (result === "accept") {
-    console.log("用户同意订阅疫苗提醒");
+    // console.log("用户同意订阅疫苗提醒");
   }
 };
 
