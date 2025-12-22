@@ -1,7 +1,5 @@
-/**
- * 宝宝列表卡片组件 - 显示协作者信息
- * 展示协作者简要信息，点击可进入管理页面
- */
+/** * 宝宝列表卡片组件 - 显示协作者信息 * 展示协作者简要信息，点击可进入管理页面
+*/
 
 <!-- 在宝宝列表卡片中添加协作者显示区域 -->
 <template>
@@ -12,14 +10,16 @@
     <view class="collaborators-header">
       <wd-icon name="people" size="16" color="#32dc6e" />
       <text class="collaborators-count">
-        亲友团
-        ({{ collaboratorsPreview.total }})
+        亲友团 ({{ collaboratorsPreview.total }})
       </text>
       <wd-icon name="arrow-right" size="12" color="#999" class="arrow" />
     </view>
 
     <!-- 协作者简要列表 -->
-    <view class="collaborators-list" v-if="collaboratorsPreview.items.length > 0">
+    <view
+      v-if="collaboratorsPreview.items.length > 0"
+      class="collaborators-list"
+    >
       <view
         v-for="(collaborator, index) in collaboratorsPreview.items"
         :key="index"
@@ -40,12 +40,16 @@
         <view class="collaborator-info">
           <text class="collaborator-name">{{ collaborator.nickName }}</text>
           <text class="collaborator-role">
-            <text v-if="isCurrentUser(collaborator) && !collaborator.relationship" class="set-relationship-mini" @click.stop="handleSetMyRelationship">
+            <text
+              v-if="isCurrentUser(collaborator) && !collaborator.relationship"
+              class="set-relationship-mini"
+              @click.stop="handleSetMyRelationship"
+            >
               <wd-icon name="edit" size="10" />
               设置关系
             </text>
             <template v-else>
-              {{ collaborator.relationship || '未设置关系' }}
+              {{ collaborator.relationship || "未设置关系" }}
               <text class="role-separator">·</text>
               {{ getRoleLabel(collaborator.role) }}
               <text v-if="collaborator.isCreator" class="creator-badge">
@@ -57,10 +61,7 @@
       </view>
 
       <!-- 更多按钮 -->
-      <view
-        v-if="collaboratorsPreview.hasMore"
-        class="collaborator-more"
-      >
+      <view v-if="collaboratorsPreview.hasMore" class="collaborator-more">
         <text class="more-text">+{{ collaboratorsPreview.more }}</text>
       </view>
     </view>
@@ -69,7 +70,10 @@
     <view v-else class="collaborators-empty">
       <view class="empty-content">
         <text class="empty-text">仅你一人</text>
-        <text class="set-relationship-hint" @click.stop="$emit('set-relationship')">
+        <text
+          class="set-relationship-hint"
+          @click.stop="$emit('set-relationship')"
+        >
           <wd-icon name="edit" size="12" />
           设置关系
         </text>
@@ -79,10 +83,10 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue';
-import type { BabyCollaborator } from '@/types/collaborator';
-import { getRoleLabel } from '@/utils/permission';
-import { getUserInfo } from '@/store/user';
+import { computed } from "vue";
+import type { BabyCollaborator } from "@/types/collaborator";
+import { getRoleLabel } from "@/utils/permission";
+import { getUserInfo } from "@/store/user";
 
 interface Props {
   babyId: string;
@@ -94,8 +98,8 @@ const props = withDefaults(defineProps<Props>(), {
 });
 
 const emit = defineEmits<{
-  'go-to-collaborators': [babyId: string];
-  'set-relationship': [];
+  "go-to-collaborators": [babyId: string];
+  "set-relationship": [];
 }>();
 
 /**
@@ -118,7 +122,7 @@ const collaboratorsPreview = computed(() => {
 });
 
 const goToCollaborators = () => {
-  emit('go-to-collaborators', props.babyId);
+  emit("go-to-collaborators", props.babyId);
 };
 
 // 判断是否是当前用户
@@ -129,12 +133,12 @@ const isCurrentUser = (collaborator: BabyCollaborator): boolean => {
 
 // 设置自己的关系
 const handleSetMyRelationship = () => {
-  emit('set-relationship');
+  emit("set-relationship");
 };
 </script>
 
 <style lang="scss" scoped>
-@import '@/styles/colors.scss';
+@import "@/styles/colors.scss";
 
 .collaborators-preview {
   padding: $spacing-md $spacing-lg;

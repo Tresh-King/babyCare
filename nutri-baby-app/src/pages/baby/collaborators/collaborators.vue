@@ -6,7 +6,7 @@
     <!-- 导航栏 -->
     <wd-navbar
       fixed
-      safeAreaInsetTop
+      safe-area-inset-top
       placeholder
       :title="`${babyName}的亲友团`"
       left-arrow
@@ -130,7 +130,7 @@
     <view class="invite-button">
       <wd-button type="primary" size="large" block @click="goToInvite">
         <wd-icon name="plus" size="18" />
-邀请新亲友
+        邀请新亲友
       </wd-button>
     </view>
 
@@ -147,8 +147,12 @@
             border
             :title="`编辑 ${currentCollaborator?.nickName} 的信息`"
           >
-            <wd-cell title="与宝宝的关系" is-link @click="showRelationshipPicker = true">
-              <text>{{ newRelationship || '未设置' }}</text>
+            <wd-cell
+              title="与宝宝的关系"
+              is-link
+              @click="showRelationshipPicker = true"
+            >
+              <text>{{ newRelationship || "未设置" }}</text>
             </wd-cell>
 
             <wd-cell title="亲友角色" title-width="150rpx">
@@ -178,7 +182,12 @@
         </view>
         <!-- 确认和取消按钮 - 固定在底部 -->
         <view class="popup-actions">
-          <wd-button size="medium" plain type="warning" @click="cancelRoleChange">
+          <wd-button
+            size="medium"
+            plain
+            type="warning"
+            @click="cancelRoleChange"
+          >
             取消
           </wd-button>
           <wd-button size="medium" type="primary" @click="confirmRoleChange">
@@ -244,10 +253,9 @@ import { ref, computed } from "vue";
 import { onLoad } from "@dcloudio/uni-app";
 import type { BabyCollaborator } from "@/types/collaborator";
 import { getUserInfo } from "@/store/user";
-import { getRoleLabel, getRoleDescription } from "@/utils/permission";
+import { getRoleLabel } from "@/utils/permission";
 import {
   apiFetchCollaborators,
-  apiUpdateCollaboratorRole,
   apiRemoveCollaborator,
 } from "@/api/collaborator";
 import { updateFamilyMember } from "@/store/collaborator";
@@ -267,9 +275,7 @@ interface PageState {
   newRole: string;
   newRelationship: string;
   customRelationship: string;
-  newAccessType: "permanent" | "temporary";
   newExpiresAt: number;
-  showDatePicker: boolean;
   showRelationshipPicker: boolean;
 }
 
@@ -285,9 +291,7 @@ const state = ref<PageState>({
   newRole: "editor",
   newRelationship: "",
   customRelationship: "",
-  newAccessType: "permanent",
   newExpiresAt: Date.now() + 365 * 24 * 60 * 60 * 1000,
-  showDatePicker: false,
   showRelationshipPicker: false,
 });
 
@@ -319,7 +323,7 @@ const filteredCollaborators = computed(() => {
     return collaborators.value;
   }
   return collaborators.value.filter((c) =>
-    c.nickName.toLowerCase().includes(searchKeyword.value.toLowerCase())
+    c.nickName.toLowerCase().includes(searchKeyword.value.toLowerCase()),
   );
 });
 
@@ -373,24 +377,20 @@ const customRelationship = computed({
 
 // 关系选项
 const relationshipOptions = [
-  { label: '爸爸', value: '爸爸' },
-  { label: '妈妈', value: '妈妈' },
-  { label: '爷爷', value: '爷爷' },
-  { label: '奶奶', value: '奶奶' },
-  { label: '外公', value: '外公' },
-  { label: '外婆', value: '外婆' },
-  { label: '叔叔', value: '叔叔' },
-  { label: '姑姑', value: '姑姑' },
-  { label: '舅舅', value: '舅舅' },
-  { label: '姨妈', value: '姨妈' },
-  { label: '其他亲友', value: '其他亲友' },
+  { label: "爸爸", value: "爸爸" },
+  { label: "妈妈", value: "妈妈" },
+  { label: "爷爷", value: "爷爷" },
+  { label: "奶奶", value: "奶奶" },
+  { label: "外公", value: "外公" },
+  { label: "外婆", value: "外婆" },
+  { label: "叔叔", value: "叔叔" },
+  { label: "姑姑", value: "姑姑" },
+  { label: "舅舅", value: "舅舅" },
+  { label: "姨妈", value: "姨妈" },
+  { label: "其他亲友", value: "其他亲友" },
 ];
 
 // ============ 方法 ============
-
-const onBack = () => {
-  uni.navigateBack();
-};
 
 const onSearch = () => {
   // 搜索已通过计算属性实现
@@ -423,27 +423,19 @@ const showRoleChangeDialog = (collaborator: BabyCollaborator) => {
   state.value.showRoleDialog = true;
 };
 
-const onRoleChange = () => {
-  console.log("[Collaborators] 角色已变更:", newRole.value);
-};
-
 const confirmRoleChange = async () => {
   if (!currentCollaborator.value) return;
 
   try {
     // 使用新的 updateFamilyMember API 同时更新角色和关系
-    await updateFamilyMember(
-      babyId.value,
-      currentCollaborator.value.openid,
-      {
-        role: newRole.value as "admin" | "editor" | "viewer",
-        relationship: newRelationship.value,
-      }
-    );
+    await updateFamilyMember(babyId.value, currentCollaborator.value.openid, {
+      role: newRole.value as "admin" | "editor" | "viewer",
+      relationship: newRelationship.value,
+    });
 
     // 更新本地列表
     const idx = collaborators.value.findIndex(
-      (c) => c.openid === currentCollaborator.value?.openid
+      (c) => c.openid === currentCollaborator.value?.openid,
     );
     if (idx !== -1 && currentCollaborator.value) {
       const collab = collaborators.value[idx];
@@ -501,7 +493,7 @@ const confirmRemove = async () => {
 
     // 更新本地列表
     state.value.collaborators = collaborators.value.filter(
-      (c) => c.openid !== currentCollaborator.value?.openid
+      (c) => c.openid !== currentCollaborator.value?.openid,
     );
 
     uni.showToast({

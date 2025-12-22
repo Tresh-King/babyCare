@@ -2,16 +2,16 @@
   <view class="ai-alert-card">
     <view class="alert-header">
       <text class="alert-title">⚠️ 健康关注事项</text>
-      <view class="alert-count" v-if="alerts.length">
+      <view v-if="alerts.length" class="alert-count">
         <text class="count-text">{{ alerts.length }}</text>
       </view>
     </view>
 
     <view class="alert-list">
       <view
-        class="alert-item"
         v-for="(alert, index) in displayedAlerts"
         :key="index"
+        class="alert-item"
         :class="`alert-${alert.level}`"
         @tap="handleAlertClick(alert)"
       >
@@ -19,10 +19,12 @@
         <view class="alert-content">
           <view class="alert-main">
             <text class="alert-title-text">{{ alert.title }}</text>
-            <text class="alert-level">{{ getAlertLevelText(alert.level) }}</text>
+            <text class="alert-level">{{
+              getAlertLevelText(alert.level)
+            }}</text>
           </view>
           <text class="alert-description">{{ alert.description }}</text>
-          <view class="alert-suggestion" v-if="alert.suggestion">
+          <view v-if="alert.suggestion" class="alert-suggestion">
             <text class="suggestion-label">建议：</text>
             <text class="suggestion-text">{{ alert.suggestion }}</text>
           </view>
@@ -33,18 +35,13 @@
       </view>
     </view>
 
-    <view class="alert-actions" v-if="alerts.length > maxDisplay">
-      <nut-button
-        type="primary"
-        size="small"
-        plain
-        @tap="toggleShowAll"
-      >
-        {{ showAll ? '收起' : `查看全部 (${alerts.length})` }}
+    <view v-if="alerts.length > maxDisplay" class="alert-actions">
+      <nut-button type="primary" size="small" plain @tap="toggleShowAll">
+        {{ showAll ? "收起" : `查看全部 (${alerts.length})` }}
       </nut-button>
     </view>
 
-    <view class="alert-empty" v-if="!alerts.length">
+    <view v-if="!alerts.length" class="alert-empty">
       <view class="empty-icon">✅</view>
       <text class="empty-text">暂无健康关注事项</text>
       <text class="empty-subtext">继续保持良好的育儿习惯</text>
@@ -53,94 +50,94 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue'
-import type { AIAlert } from '@/types/ai'
+import { computed, ref } from "vue";
+import type { AIAlert } from "@/types/ai";
 
 interface Props {
-  alerts: AIAlert[]
-  maxDisplay?: number
-  showActions?: boolean
-  compact?: boolean
+  alerts: AIAlert[];
+  maxDisplay?: number;
+  showActions?: boolean;
+  compact?: boolean;
 }
 
 const props = withDefaults(defineProps<Props>(), {
   maxDisplay: 3,
   showActions: true,
-  compact: false
-})
+  compact: false,
+});
 
-const emit = defineEmits(['alertClick', 'showAll'])
+const emit = defineEmits(["alertClick", "showAll"]);
 
-const showAll = ref(false)
+const showAll = ref(false);
 
 // 计算显示的警告
 const displayedAlerts = computed(() => {
   if (showAll.value) {
-    return props.alerts
+    return props.alerts;
   }
-  return props.alerts.slice(0, props.maxDisplay)
-})
+  return props.alerts.slice(0, props.maxDisplay);
+});
 
 // 获取警告图标
 const getAlertIcon = (level: string): string => {
   const iconMap: Record<string, string> = {
-    critical: '🚨',
-    warning: '⚠️',
-    info: 'ℹ️'
-  }
-  return iconMap[level] || '⚠️'
-}
+    critical: "🚨",
+    warning: "⚠️",
+    info: "ℹ️",
+  };
+  return iconMap[level] || "⚠️";
+};
 
 // 获取警告级别文本
 const getAlertLevelText = (level: string): string => {
   const textMap: Record<string, string> = {
-    critical: '严重',
-    warning: '警告',
-    info: '提示'
-  }
-  return textMap[level] || level
-}
+    critical: "严重",
+    warning: "警告",
+    info: "提示",
+  };
+  return textMap[level] || level;
+};
 
 // 格式化时间
 const formatTime = (timestamp: string): string => {
   try {
-    const date = new Date(timestamp)
-    const now = new Date()
-    const diff = now.getTime() - date.getTime()
+    const date = new Date(timestamp);
+    const now = new Date();
+    const diff = now.getTime() - date.getTime();
 
     // 小于1小时显示"刚刚"
     if (diff < 60 * 60 * 1000) {
-      return '刚刚'
+      return "刚刚";
     }
 
     // 小于24小时显示小时数
     if (diff < 24 * 60 * 60 * 1000) {
-      const hours = Math.floor(diff / (60 * 60 * 1000))
-      return `${hours}小时前`
+      const hours = Math.floor(diff / (60 * 60 * 1000));
+      return `${hours}小时前`;
     }
 
     // 显示日期
-    return date.toLocaleDateString('zh-CN', {
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    })
-  } catch (error) {
-    return timestamp
+    return date.toLocaleDateString("zh-CN", {
+      month: "short",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+  } catch {
+    return timestamp;
   }
-}
+};
 
 // 处理警告点击
 const handleAlertClick = (alert: AIAlert) => {
-  emit('alertClick', alert)
-}
+  emit("alertClick", alert);
+};
 
 // 切换显示全部
 const toggleShowAll = () => {
-  showAll.value = !showAll.value
-  emit('showAll', showAll.value)
-}
+  showAll.value = !showAll.value;
+  emit("showAll", showAll.value);
+};
 </script>
 
 <style lang="scss" scoped>

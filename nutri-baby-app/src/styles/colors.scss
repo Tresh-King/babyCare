@@ -1,88 +1,98 @@
 /**
  * 统一配色系统
- * 母婴APP设计规范 - 柔和温暖风格
+ * NutriBaby 2025 - 智能、专业、柔和 
  */
 
 // ===== 品牌色系 =====
-// 主色：清爽绿 (用于主要操作、按钮、强调)
-$color-primary: #32dc6e;
-$color-primary-light: #7dd3a2;
-$color-primary-lighter: #e8f7f0;
+// 主色：智能绿 (象征健康、成长、专业)
+$color-primary: #7BD3A2;
+$color-primary-light: #9CEAC0;
+$color-primary-lighter: #F0FBF5;
+$color-primary-dark: #5BB884;
 
-// 次级色：柔和天蓝 (用于辅助操作、信息提示)
-$color-secondary: #5dade2;
-$color-secondary-light: #a8d8f0;
-$color-secondary-lighter: #e8f4f9;
+// 次级色：温馨粉 (象征关爱、呵护)
+$color-secondary: #FDDDE6;
+$color-secondary-light: #FFEFF3;
+$color-secondary-lighter: #FFF9FA;
+
+// 辅助色：阳光黄 (象征活力、快乐)
+$color-accent: #FFD166;
+$color-accent-light: #FFE099;
+$color-warning: $color-accent;
 
 // ===== 状态色系 =====
-// 警示色：温和红 (用于危险操作、删除)
-$color-danger: #ff6b6b;
-$color-danger-light: #ffe0e0;
+// 错误/警示：柔和红
+$color-danger: #FA8C8C;
+$color-danger-light: #FFF1F1;
 
-// 警告色：温暖橙 (用于警告提示)
-$color-warning: #ffa500;
-$color-warning-light: #fff4e6;
+// 成功：主色调
+$color-success: #7BD3A2;
+$color-success-light: #F0FBF5;
 
-// 成功色：绿色
-$color-success: #32dc6e;
-$color-success-light: #e8f7f0;
+// 提醒/通知：天蓝色
+$color-info: #94A3B8;
+$color-info-light: #F1F5F9;
 
 // ===== 中性色系 =====
 // 文字色
-$color-text-primary: #2c3e50;      // 主文本 (深灰)
-$color-text-secondary: #7f8c8d;    // 辅助文本 (中灰)
-$color-text-tertiary: #bdc3c7;     // 弱化文本 (浅灰)
-$color-text-disabled: #e0e0e0;     // 禁用文本 (极浅灰)
+$color-text-primary: #1E293B; // 主标题 (Slate 800)
+$color-text-secondary: #64748B; // 副标题/正文 (Slate 500)
+$color-text-tertiary: #94A3B8; // 辅助文本 (Slate 400)
+$color-text-disabled: #CBD5E1; // 禁用文本 (Slate 300)
 
 // 背景色
-$color-bg-primary: #ffffff;        // 主背景 (白色)
-$color-bg-secondary: #f6f8f7;      // 次级背景 (淡绿灰)
-$color-bg-tertiary: #f8f9fa;       // 第三级背景 (淡蓝灰)
-$color-bg-disabled: #f5f5f5;       // 禁用背景 (浅灰)
+$color-bg-primary: #FFFFFF; // 核心背景
+$color-bg-secondary: #F7FBF9; // 页面主底色 (带轻微绿调)
+$color-bg-tertiary: #F1F5F9; // 模块底色
+$color-bg-disabled: #F8FAFC; // 禁用底色
 
 // 边框色
-$color-border-primary: #cae3d4;    // 主边框 (淡绿)
-$color-border-secondary: #e8eef5;  // 次级边框 (淡蓝)
-$color-border-light: #f0f0f0;      // 浅边框 (极浅灰)
+$color-border-primary: #E2E8F0; // 默认边框
+$color-border-light: #F1F5F9; // 浅色边框
 
-// 分割线色
-$color-divider: #e0e0e0;           // 分割线 (浅灰)
+// 分割线
+$color-divider: #F1F5F9;
 
-// ===== 阴影系统 =====
-$shadow-sm: 0 2rpx 8rpx rgba(0, 0, 0, 0.06);
-$shadow-md: 0 4rpx 16rpx rgba(0, 0, 0, 0.08);
-$shadow-lg: 0 8rpx 24rpx rgba(0, 0, 0, 0.12);
+// ===== 阴影系统 - 更具呼吸感 =====
+$shadow-sm: 0 4px 12rpx rgba(30, 41, 59, 0.04);
+$shadow-md: 0 8px 24rpx rgba(123, 211, 162, 0.08);
+$shadow-lg: 0 16px 40rpx rgba(123, 211, 162, 0.12);
+$shadow-premium: 0 20px 50rpx rgba(30, 41, 59, 0.05);
 
-// 绿色阴影 (配合主色使用)
-$shadow-primary-sm: 0 2rpx 8rpx rgba(50, 220, 110, 0.15);
-$shadow-primary-md: 0 4rpx 16rpx rgba(50, 220, 110, 0.2);
+// 品牌阴影
+$shadow-primary-sm: 0 4px 12rpx rgba(123, 211, 162, 0.15);
+$shadow-primary-md: 0 8px 24rpx rgba(123, 211, 162, 0.25);
 
-// ===== 圆角系统 =====
-$radius-xs: 4rpx;
-$radius-sm: 8rpx;
-$radius-md: 12rpx;
-$radius-lg: 16rpx;
-$radius-xl: 20rpx;
-$radius-full: 50%;
+// ===== 圆角系统 - 更加圆润亲切 =====
+$radius-xs: 8rpx;
+$radius-sm: 12rpx;
+$radius-md: 20rpx;
+$radius-lg: 32rpx;
+$radius-xl: 48rpx;
+$radius-full: 100rpx;
 
 // ===== 间距系统 =====
-$spacing-xs: 4rpx;
-$spacing-sm: 8rpx;
-$spacing-md: 12rpx;
-$spacing-lg: 16rpx;
-$spacing-xl: 20rpx;
-$spacing-2xl: 24rpx;
-$spacing-3xl: 32rpx;
+$spacing-xs: 8rpx;
+$spacing-sm: 12rpx;
+$spacing-md: 16rpx;
+$spacing-lg: 24rpx;
+$spacing-xl: 32rpx;
+$spacing-2xl: 40rpx;
+$spacing-3xl: 48rpx;
 
-// ===== 字体大小 =====
+// ===== 比例间距 (rpx) =====
+$page-gap: 32rpx;
+$card-padding: 32rpx;
+
+// ===== 字体大小系统 =====
 $font-size-xs: 20rpx;
-$font-size-sm: 22rpx;
-$font-size-base: 24rpx;
-$font-size-md: 26rpx;
-$font-size-lg: 28rpx;
-$font-size-xl: 32rpx;
-$font-size-2xl: 34rpx;
-$font-size-3xl: 36rpx;
+$font-size-sm: 24rpx;
+$font-size-base: 28rpx;
+$font-size-md: 30rpx;
+$font-size-lg: 32rpx;
+$font-size-xl: 36rpx;
+$font-size-2xl: 40rpx;
+$font-size-3xl: 48rpx;
 
 // ===== 字体权重 =====
 $font-weight-normal: 400;
@@ -91,19 +101,17 @@ $font-weight-semibold: 600;
 $font-weight-bold: 700;
 
 // ===== 过渡动画 =====
-$transition-fast: 0.15s ease;
-$transition-base: 0.2s ease;
-$transition-slow: 0.3s ease;
+$transition-fast: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+$transition-base: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+$transition-slow: 0.5s cubic-bezier(0.4, 0, 0.2, 1);
 
 // ===== 渐变色 =====
-// 主色渐变
-$gradient-primary: linear-gradient(135deg, #32dc6e 0%, #7ae88f 100%);
+// 智雅绿渐变
+$gradient-primary: linear-gradient(135deg, #7BD3A2 0%, #9CEAC0 100%);
 
-// 绿蓝渐变 (用于卡片背景)
-$gradient-primary-secondary: linear-gradient(135deg, #32dc6e 0%, #5dade2 100%);
+// 梦幻多色渐变
+$gradient-dream: linear-gradient(135deg, #7BD3A2 0%, #8CC7FF 50%, #FDDDE6 100%);
 
-// 浅色渐变背景 (用于页面背景)
-$gradient-bg-light: linear-gradient(180deg, #f8f9fa 0%, #f6f8f7 100%);
-
-// ===== 导出所有色变量供 Wot UI 使用 =====
-// (这些会在 vue 文件中通过 :style 动态引用)
+// 页面背景柔和渐变
+$gradient-bg: linear-gradient(180deg, #FFFFFF 0%, #F7FBF9 100%);
+$gradient-bg-light: linear-gradient(180deg, #FFFFFF 0%, #F7FBF9 100%);

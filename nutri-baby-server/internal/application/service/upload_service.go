@@ -119,9 +119,11 @@ func (s *UploadService) uploadToCOS(ctx context.Context, fileHeader *multipart.F
 	}, nil
 }
 
-// uploadToLocal 上传到本地磁盘 (旧逻辑，作为降级方案)
+// uploadToLocal 上传到本地磁盘
 func (s *UploadService) uploadToLocal(fileHeader *multipart.FileHeader, subDir string, filename string) (*UploadResult, error) {
-	storagePath := s.cfg.Upload.StoragePath
+	storagePath := s.cfg.Upload.StoragePath // e.g., "uploads/"
+
+	// 确保目录存在
 	dirPath := filepath.Join(storagePath, "images", subDir)
 	if err := os.MkdirAll(dirPath, 0755); err != nil {
 		return nil, errors.Wrap(errors.InternalError, "Failed to create directory", err)
@@ -130,26 +132,29 @@ func (s *UploadService) uploadToLocal(fileHeader *multipart.FileHeader, subDir s
 	filePath := filepath.Join(dirPath, filename)
 	srcFile, err := fileHeader.Open()
 	if err != nil {
-		return nil, errors.Wrap(errors.InternalError, "Failed to open file", err)
+		return nil, errors.Wrap(errors.InternalError, "Failed to open source file", err)
 	}
 	defer srcFile.Close()
 
 	dstFile, err := os.Create(filePath)
 	if err != nil {
-		return nil, errors.Wrap(errors.InternalError, "Failed to create file", err)
+		return nil, errors.Wrap(errors.InternalError, "Failed to create destination file", err)
 	}
 	defer dstFile.Close()
 
 	if _, err := dstFile.ReadFrom(srcFile); err != nil {
-		return nil, errors.Wrap(errors.InternalError, "Failed to save file", err)
+		return nil, errors.Wrap(errors.InternalError, "Failed to save file content", err)
 	}
 
-	relPath := filepath.Join("uploads", "images", subDir, filename)
-	url := s.cfg.Server.BaseURL + "/" + filepath.ToSlash(relPath)
+	// 关键修复：URL 应当基于 /uploads/ 开头，而 Path 作为本地存储路径
+	// 假设 r.Static("/uploads", "./uploads")，且 storagePath="uploads/"
+	// 那么 relPathFromWebRoot 是 "images/users/xxx.jpg"
+	relPath := filepath.ToSlash(filepath.Join("images", subDir, filename))
+	url := fmt.Sprintf("%s/uploads/%s", strings.TrimSuffix(s.cfg.Server.BaseURL, "/"), relPath)
 
 	return &UploadResult{
 		URL:      url,
-		Path:     "/" + relPath,
+		Path:     filepath.ToSlash(filepath.Join(storagePath, "images", subDir, filename)),
 		Filename: filename,
 		Size:     fileHeader.Size,
 	}, nil

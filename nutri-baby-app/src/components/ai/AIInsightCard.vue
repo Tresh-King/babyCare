@@ -15,20 +15,15 @@
     <view class="insight-content">
       <text class="insight-description">{{ insight.description }}</text>
 
-      <view class="insight-category" v-if="insight.category">
+      <view v-if="insight.category" class="insight-category">
         <nut-tag type="primary" size="small">
           {{ insight.category }}
         </nut-tag>
       </view>
     </view>
 
-    <view class="insight-actions" v-if="showActions">
-      <nut-button
-        type="primary"
-        size="small"
-        plain
-        @tap="handleAction"
-      >
+    <view v-if="showActions" class="insight-actions">
+      <nut-button type="primary" size="small" plain @tap="handleAction">
         查看详情
       </nut-button>
     </view>
@@ -36,53 +31,53 @@
 </template>
 
 <script setup lang="ts">
-import type { AIInsight } from '@/types/ai'
+import type { AIInsight } from "@/types/ai";
 
 interface Props {
-  insight: AIInsight
-  showActions?: boolean
-  compact?: boolean
+  insight: AIInsight;
+  showActions?: boolean;
+  compact?: boolean;
 }
 
 const props = withDefaults(defineProps<Props>(), {
   showActions: false,
-  compact: false
-})
+  compact: false,
+});
 
-const emit = defineEmits(['action', 'detail'])
+const emit = defineEmits(["action", "detail"]);
 
 // 获取洞察图标
 const getInsightIcon = (type: string): string => {
   const iconMap: Record<string, string> = {
-    feeding: '🍼',
-    sleep: '😴',
-    growth: '📈',
-    health: '❤️',
-    behavior: '🧠',
-    pattern: '🔍',
-    trend: '📊',
-    recommendation: '💡',
-    warning: '⚠️',
-    tip: '✨'
-  }
-  return iconMap[type] || '💡'
-}
+    feeding: "🍼",
+    sleep: "😴",
+    growth: "📈",
+    health: "❤️",
+    behavior: "🧠",
+    pattern: "🔍",
+    trend: "📊",
+    recommendation: "💡",
+    warning: "⚠️",
+    tip: "✨",
+  };
+  return iconMap[type] || "💡";
+};
 
 // 获取优先级文本
 const getPriorityText = (priority: string): string => {
   const textMap: Record<string, string> = {
-    high: '高优先级',
-    medium: '中等优先级',
-    low: '低优先级'
-  }
-  return textMap[priority] || priority
-}
+    high: "高优先级",
+    medium: "中等优先级",
+    low: "低优先级",
+  };
+  return textMap[priority] || priority;
+};
 
 // 处理操作
 const handleAction = () => {
-  emit('action', props.insight)
-  emit('detail', props.insight)
-}
+  emit("action", props.insight);
+  emit("detail", props.insight);
+};
 </script>
 
 <style lang="scss" scoped>

@@ -3,7 +3,7 @@
     <wd-navbar
       title="邀请亲友"
       left-arrow
-      safeAreaInsetTop
+      safe-area-inset-top
       @click-left="handleBack"
     >
       <template #capsule>
@@ -22,11 +22,7 @@
               mode="aspectFill"
             />
             <!-- 默认头像 -->
-            <image
-              v-else
-              src="@/static/default.png"
-              mode="aspectFill"
-            />
+            <image v-else src="@/static/default.png" mode="aspectFill" />
           </view>
           <view class="baby-detail">
             <text class="baby-name">{{ babyName }}</text>
@@ -37,8 +33,12 @@
 
       <!-- 设置表单 -->
       <wd-cell-group>
-        <wd-cell title="与宝宝的关系" is-link @click="showRelationshipPicker = true">
-          <text>{{ selectedRelationship || '请选择' }}</text>
+        <wd-cell
+          title="与宝宝的关系"
+          is-link
+          @click="showRelationshipPicker = true"
+        >
+          <text>{{ selectedRelationship || "请选择" }}</text>
         </wd-cell>
 
         <wd-cell title="亲友角色">
@@ -57,8 +57,8 @@
 
         <wd-datetime-picker
           v-if="accessType === 'temporary'"
-          label="到期时间"
           v-model="expiresDateValue"
+          label="到期时间"
           type="datetime"
           :min-date="minDate"
           :max-date="maxDate"
@@ -70,10 +70,10 @@
       <!-- 角色说明 -->
       <view class="role-tips">
         <text class="tip-icon">ℹ️</text>
-        <text class="tip-text" v-if="selectedRole === 'editor'">
+        <text v-if="selectedRole === 'editor'" class="tip-text">
           编辑者可以记录和编辑所有数据
         </text>
-        <text class="tip-text" v-else> 查看者只能查看数据，不能编辑 </text>
+        <text v-else class="tip-text"> 查看者只能查看数据，不能编辑 </text>
       </view>
 
       <!-- 生成按钮 -->
@@ -82,8 +82,8 @@
           type="primary"
           size="large"
           block
-          @click="handleGenerateQRCode"
           :loading="generating"
+          @click="handleGenerateQRCode"
         >
           {{ generating ? "生成中..." : "生成邀请二维码" }}
         </wd-button>
@@ -179,17 +179,17 @@ const showRelationshipPicker = ref(false);
 
 // 关系选项
 const relationshipOptions = [
-  { label: '爸爸', value: '爸爸' },
-  { label: '妈妈', value: '妈妈' },
-  { label: '爷爷', value: '爷爷' },
-  { label: '奶奶', value: '奶奶' },
-  { label: '外公', value: '外公' },
-  { label: '外婆', value: '外婆' },
-  { label: '叔叔', value: '叔叔' },
-  { label: '姑姑', value: '姑姑' },
-  { label: '舅舅', value: '舅舅' },
-  { label: '姨妈', value: '姨妈' },
-  { label: '其他亲友', value: '其他亲友' },
+  { label: "爸爸", value: "爸爸" },
+  { label: "妈妈", value: "妈妈" },
+  { label: "爷爷", value: "爷爷" },
+  { label: "奶奶", value: "奶奶" },
+  { label: "外公", value: "外公" },
+  { label: "外婆", value: "外婆" },
+  { label: "叔叔", value: "叔叔" },
+  { label: "姑姑", value: "姑姑" },
+  { label: "舅舅", value: "舅舅" },
+  { label: "姨妈", value: "姨妈" },
+  { label: "其他亲友", value: "其他亲友" },
 ];
 
 // 二维码相关
@@ -211,7 +211,8 @@ onLoad((options) => {
 
   // 获取宝宝详情（包括头像）
   if (babyId.value) {
-    babyApi.apiFetchBabyDetail(babyId.value)
+    babyApi
+      .apiFetchBabyDetail(babyId.value)
       .then((baby) => {
         if (baby?.avatarUrl) {
           babyAvatarUrl.value = baby.avatarUrl;
@@ -352,7 +353,7 @@ function confirmRelationship() {
 </script>
 
 <style lang="scss" scoped>
-@import '@/styles/colors.scss';
+@import "@/styles/colors.scss";
 
 // ===== 页面布局 =====
 .invite-page {
@@ -491,7 +492,11 @@ function confirmRelationship() {
   align-items: flex-start;
   gap: $spacing-md;
   padding: $spacing-lg;
-  background: linear-gradient(135deg, rgba(50, 220, 110, 0.08) 0%, rgba(50, 220, 110, 0.04) 100%);
+  background: linear-gradient(
+    135deg,
+    rgba(50, 220, 110, 0.08) 0%,
+    rgba(50, 220, 110, 0.04) 100%
+  );
   border: 1rpx solid $color-border-primary;
   border-left: 4rpx solid $color-primary;
   border-radius: $radius-md;

@@ -1,367 +1,325 @@
 <template>
-  <view>
-    <wd-navbar title="疫苗日程" left-text="返回" right-text="设置" left-arrow fixed placeholder safeAreaInsetTop>
+  <view class="vaccine-container">
+    <wd-navbar
+      title="疫苗助手"
+      left-text="返回"
+      left-arrow
+      fixed
+      placeholder
+      safe-area-inset-top
+    >
       <template #capsule>
         <wd-navbar-capsule @back="goBack" @back-home="goBackHome" />
       </template>
     </wd-navbar>
-    <view class="vaccine-page">
-      <!-- 疫苗完成度 -->
-      <view v-if="currentBaby" class="progress-card">
-        <view class="card-header">
-          <image src="/static/progress_activity.svg" class="header-icon" />
-          <text class="header-title">疫苗接种进度</text>
-        </view>
 
-        <view class="progress-info">
-          <view class="progress-bar-container">
-            <view class="progress-bar">
-              <view
-                class="progress-fill"
-                :style="{ width: completionStats.completionRate + '%' }"
-              ></view>
-            </view>
-            <text class="progress-text">
-              {{ completionStats.completed + completionStats.skipped }} /
-              {{ completionStats.total }} ({{
-                completionStats.completionRate
-              }}%)
-            </text>
-          </view>
-        </view>
-      </view>
-
-      <!-- 即将到期提醒 (基于待接种的日程计算) -->
-      <view
-        v-if="upcomingSchedules && upcomingSchedules.length > 0"
-        class="reminders-section"
-      >
-        <view class="section-title">
-          <image src="/static/recent.svg" class="section-icon" />
-          近期待接种 ({{ upcomingSchedules.length }})
-        </view>
-
-        <view class="reminder-list">
-          <view
-            v-for="schedule in upcomingSchedules"
-            :key="schedule.scheduleId"
-            class="reminder-item"
-          >
-            <view class="reminder-content">
-              <view class="vaccine-name">
-                {{ schedule.vaccineName }} (第{{ schedule.doseNumber }}针)
+    <scroll-view class="vaccine-scroll" scroll-y @scrolltolower="onReachBottom">
+      <view v-if="currentBaby" class="vaccine-content">
+        <!-- 核心统计卡片 (Glassmorphism) -->
+        <view class="hero-stats-card premium-shadow">
+          <view class="stats-bg-decoration"></view>
+          <view class="card-content">
+            <view class="stats-main">
+              <view class="completion-info">
+                <text class="label">接种完成率</text>
+                <view class="value-row">
+                  <text class="large-value">{{
+                    completionStats.completionRate
+                  }}</text>
+                  <text class="unit">%</text>
+                </view>
               </view>
-              <view class="vaccine-date">
-                建议月龄: {{ schedule.ageInMonths }}个月
-              </view>
-            </view>
-            <view class="reminder-action">
-              <wd-button
-                size="small"
-                type="primary"
-                @click.stop="handleRecordVaccine(schedule)"
-              >
-                记录接种
-              </wd-button>
-            </view>
-          </view>
-        </view>
-      </view>
-
-      <!-- 疫苗计划列表 -->
-      <view class="plan-section">
-        <view class="section-header">
-          <view class="section-title">
-            <image src="/static/calendar_month.svg" class="section-icon" />
-            疫苗日程
-          </view>
-          <wd-button size="small" @click="showAddDialog = true">
-            添加自定义计划
-          </wd-button>
-        </view>
-
-        <wd-tabs v-model="activeTab">
-          <wd-tab title="全部" pane-key="all" name="all" />
-          <wd-tab title="已完成" pane-key="completed" name="completed" />
-          <wd-tab title="未完成" pane-key="pending" name="pending" />
-          <wd-tab title="已跳过" pane-key="skipped" name="skipped" />
-        </wd-tabs>
-
-        <view class="plan-list">
-          <view
-            v-for="schedule in vaccineSchedules"
-            :key="schedule.scheduleId"
-            class="plan-item"
-            :class="{ completed: schedule.vaccinationStatus === 'completed' }"
-          >
-            <view class="plan-header">
-              <view class="plan-name">
-                <text class="required-badge" v-if="schedule.isRequired"
-                  >必打</text
-                >
-                <text class="custom-badge" v-if="isCustomPlan(schedule)"
-                  >自定义</text
-                >
-                {{ schedule.vaccineName }}
-              </view>
-              <view class="plan-header-right">
-                <text class="plan-age">{{ schedule.ageInMonths }}个月</text>
-                <view
-                  class="plan-actions"
-                  v-if="schedule.vaccinationStatus === 'pending'"
-                >
-                  <wd-button
-                    size="small"
-                    type="info"
-                    @click.stop="handleEditPlan(schedule)"
-                  >
-                    编辑
-                  </wd-button>
-                  <wd-button
-                    v-if="isCustomPlan(schedule)"
-                    size="small"
-                    type="danger"
-                    @click.stop="handleDeletePlan(schedule)"
-                  >
-                    删除
-                  </wd-button>
+              <view class="progress-ring-box">
+                <!-- 简单的环形进度示意，实际可用 canvas 或 svg -->
+                <view class="ring-track">
+                  <view
+                    class="ring-fill"
+                    :style="{ '--percent': completionStats.completionRate }"
+                  ></view>
+                  <view class="ring-center">
+                    <wd-icon name="check-circle" size="24" color="#7BD3A2" />
+                  </view>
                 </view>
               </view>
             </view>
-
-            <view class="plan-detail">
-              <text class="plan-dose">第{{ schedule.doseNumber }}针</text>
-              <text v-if="schedule.description" class="plan-desc">{{
-                schedule.description
-              }}</text>
+            <view class="stats-footer">
+              <view class="stat-item">
+                <text class="s-val">{{ completionStats.completed }}</text>
+                <text class="s-lab">已接种</text>
+              </view>
+              <view class="stat-divider"></view>
+              <view class="stat-item">
+                <text class="s-val">{{ completionStats.pending }}</text>
+                <text class="s-lab">待接种</text>
+              </view>
+              <view class="stat-divider"></view>
+              <view class="stat-item">
+                <text class="s-val">{{ completionStats.skipped }}</text>
+                <text class="s-lab">已跳过</text>
+              </view>
             </view>
+          </view>
+        </view>
 
+        <!-- 即将到期提醒 -->
+        <view v-if="upcomingSchedules.length > 0" class="alert-section">
+          <view class="section-header">
+            <text class="title">近期待办</text>
+            <text class="count">{{ upcomingSchedules.length }}</text>
+          </view>
+          <view class="alert-horizontal-scroll">
             <view
-              v-if="schedule.vaccinationStatus === 'completed'"
-              class="plan-record"
+              v-for="schedule in upcomingSchedules"
+              :key="schedule.scheduleId"
+              class="alert-card premium-shadow"
+              @click="handleRecordVaccine(schedule)"
             >
-              <image src="/static/check-icon.svg" class="completed-icon" />
-              <text class="completed-text">已接种</text>
-              <text class="completed-date">
-                {{ formatDate(schedule.vaccineDate || 0, "YYYY-MM-DD") }}
-              </text>
-              <text v-if="schedule.hospital" class="hospital-info">
-                {{ schedule.hospital }}
-              </text>
+              <view class="alert-icon-box">
+                <image src="/static/recent.svg" mode="aspectFit" class="icon" />
+              </view>
+              <view class="alert-info">
+                <text class="v-name">{{ schedule.vaccineName }}</text>
+                <text class="v-meta"
+                  >第{{ schedule.doseNumber }}针 ·
+                  {{ schedule.ageInMonths }}个月</text
+                >
+              </view>
+              <wd-icon name="arrow-right" size="16" color="#94A3B8" />
             </view>
+          </view>
+        </view>
 
-            <view
-              v-else-if="schedule.vaccinationStatus === 'skipped'"
-              class="plan-record"
-            >
-              <image src="/static/skip-icon.svg" class="skipped-icon" />
-              <text class="skipped-text">已跳过</text>
-            </view>
-
-            <view v-else class="plan-action">
-              <wd-button
-                size="small"
-                type="primary"
-                @click="handleRecordBySchedule(schedule)"
-              >
-                记录接种
-              </wd-button>
-              <wd-button
-                size="small"
-                type="info"
-                @click="handleSkipSchedule(schedule)"
-              >
-                跳过
-              </wd-button>
+        <!-- 详细计划列表 -->
+        <view class="plan-section">
+          <view class="sticky-tabs-wrapper">
+            <wd-tabs v-model="activeTab" class="premium-tabs">
+              <wd-tab title="全部" name="all" />
+              <wd-tab title="已接种" name="completed" />
+              <wd-tab title="待接种" name="pending" />
+              <wd-tab title="已跳过" name="skipped" />
+            </wd-tabs>
+            <view class="add-btn-fab" @click="showAddDialog = true">
+              <wd-icon name="add" size="20" color="#FFF" />
             </view>
           </view>
 
-          <!-- 加载更多组件 -->
-          <wd-loadmore
-            :state="loadMoreState"
-            @reload="loadMore"
-            loading-text="加载中..."
-            finished-text="没有更多了"
-            error-text="加载失败，点击重试"
-          />
+          <view class="vaccine-grid">
+            <view
+              v-for="schedule in vaccineSchedules"
+              :key="schedule.scheduleId"
+              class="vaccine-block premium-shadow"
+              :class="schedule.vaccinationStatus"
+            >
+              <view class="block-top">
+                <view class="badge-row">
+                  <text v-if="schedule.isRequired" class="tag required"
+                    >必打</text
+                  >
+                  <text v-if="schedule.isCustom" class="tag custom"
+                    >自定义</text
+                  >
+                  <text class="age-badge">{{ schedule.ageInMonths }}M</text>
+                </view>
+                <text class="vaccine-title single-line">{{
+                  schedule.vaccineName
+                }}</text>
+                <text class="vaccine-dose text-tertiary"
+                  >第{{ schedule.doseNumber }}剂</text
+                >
+              </view>
+
+              <view class="block-actions">
+                <template v-if="schedule.vaccinationStatus === 'pending'">
+                  <view
+                    class="main-action"
+                    @click="handleRecordVaccine(schedule)"
+                  >
+                    <wd-icon name="edit-1" size="14" />
+                    <text>记录</text>
+                  </view>
+                  <view class="sub-action" @click="handleSkipSchedule(schedule)"
+                    >跳过</view
+                  >
+                </template>
+                <template
+                  v-else-if="schedule.vaccinationStatus === 'completed'"
+                >
+                  <view class="status-marker completed">
+                    <wd-icon name="success-no-circle" size="14" />
+                    <text>{{
+                      formatDate(schedule.vaccineDate || 0, "MM-DD")
+                    }}</text>
+                  </view>
+                </template>
+                <template v-else>
+                  <view class="status-marker skipped">
+                    <text>已跳过</text>
+                  </view>
+                </template>
+              </view>
+            </view>
+          </view>
+
+          <view class="load-more-padding">
+            <wd-loadmore :state="loadMoreState" />
+          </view>
         </view>
       </view>
 
-      <!-- 接种记录对话框 -->
-      <wd-popup
-        v-model="showRecordDialog"
-        position="bottom"
-        custom-style="height: 75%"
-        round
-        closeable
-      >
-        <wd-cell-group title="记录疫苗接种" border>
+      <view v-else class="empty-placeholder">
+        <wd-status-tip
+          image="content"
+          description="未发现宝宝信息，请先添加宝宝"
+        />
+      </view>
+    </scroll-view>
+
+    <!-- 记录对话框 (Redesigned) -->
+    <wd-popup
+      v-model="showRecordDialog"
+      position="bottom"
+      round
+      safe-area-inset-bottom
+    >
+      <view class="premium-popup-content">
+        <view class="popup-header">
+          <text class="popup-title">记录疫苗接种</text>
+          <wd-icon name="close" size="24" @click="showRecordDialog = false" />
+        </view>
+
+        <view class="form-body">
+          <view class="form-item-v2">
+            <text class="label">接种日期</text>
+            <wd-datetime-picker v-model="recordForm.vaccineDate" type="date" />
+          </view>
+
+          <view class="form-item-v2">
+            <text class="label">接种医院 *</text>
+            <wd-input
+              v-model="recordForm.hospital"
+              placeholder="请输入接种医院名称"
+              no-border
+            />
+          </view>
+
+          <view class="form-row">
+            <view class="form-item-v2 flex-1">
+              <text class="label">疫苗批号</text>
+              <wd-input
+                v-model="recordForm.batchNumber"
+                placeholder="可选"
+                no-border
+              />
+            </view>
+            <view class="form-item-v2 flex-1">
+              <text class="label">接种医生</text>
+              <wd-input
+                v-model="recordForm.doctor"
+                placeholder="可选"
+                no-border
+              />
+            </view>
+          </view>
+
+          <view class="form-item-v2">
+            <text class="label">备注 / 不良反应</text>
+            <wd-textarea
+              v-model="recordForm.note"
+              placeholder="记录宝宝接种后的反应..."
+              auto-height
+            />
+          </view>
+        </view>
+
+        <view class="popup-footer">
+          <wd-button block round type="primary" @click="handleSaveRecord"
+            >提交记录</wd-button
+          >
+        </view>
+      </view>
+    </wd-popup>
+
+    <!-- 自定义计划对话框 -->
+    <wd-popup
+      v-model="showAddDialog"
+      position="bottom"
+      round
+      safe-area-inset-bottom
+    >
+      <view class="premium-popup-content">
+        <view class="popup-header">
+          <text class="popup-title">{{
+            isEdit ? "编辑计划" : "新增自定义计划"
+          }}</text>
+          <wd-icon name="close" size="24" @click="showAddDialog = false" />
+        </view>
+
+        <view class="form-body">
           <wd-input
-            v-model="recordForm.vaccineName"
-            placeholder="疫苗名称"
-            readonly
+            v-model="planForm.vaccineName"
             label="疫苗名称"
-          />
-          <wd-datetime-picker
-            v-model="recordForm.vaccineDate"
-            type="date"
-            label="接种日期"
-          />
-          <wd-input
-            v-model="recordForm.hospital"
-            placeholder="接种医院"
-            label="接种医院*"
+            placeholder="例如：五联疫苗"
             required
           />
           <wd-input
-            v-model="recordForm.batchNumber"
-            placeholder="疫苗批号"
-            label="疫苗批号"
+            v-model="planForm.vaccineType"
+            label="类型标识"
+            placeholder="例如：DTaP"
+            required
           />
-          <wd-input
-            v-model="recordForm.doctor"
-            placeholder="接种医生"
-            label="接种医生"
-          />
-          <wd-textarea
-            v-model="recordForm.reaction"
-            placeholder="不良反应"
-            label="不良反应"
-            auto-height
-          />
-          <wd-textarea
-            v-model="recordForm.note"
-            placeholder="备注"
-            label="备注"
-            auto-height
-          />
-        </wd-cell-group>
-        <view class="dialog-footer">
-          <wd-button type="primary" size="large" @click="handleSaveRecord">
-            保存
-          </wd-button>
-          <wd-button type="info" size="large" @click="showRecordDialog = false">
-            取消
-          </wd-button>
-        </view>
-      </wd-popup>
-
-      <!-- 添加/编辑疫苗计划对话框 -->
-      <wd-popup
-        v-model="showAddDialog"
-        position="bottom"
-        :style="{ height: '80%' }"
-        round
-        closeable
-      >
-        <wd-cell-group :title="isEdit ? '编辑疫苗计划' : '添加疫苗计划'" border>
-          <wd-form ref="formRef">
+          <view class="form-row">
             <wd-input
-              label="疫苗名称"
-              v-model="planForm.vaccineName"
-              placeholder="疫苗名称"
-              required
-            />
-            <wd-input
-              label="疫苗类型"
-              v-model="planForm.vaccineType"
-              placeholder="例如: HepB, BCG, DTaP"
-              required
-            />
-            <wd-input
-              type="number"
-              label="接种月龄"
               v-model.number="planForm.ageInMonths"
-              placeholder="接种月龄"
+              label="接种月龄"
+              type="number"
+              placeholder="0-36"
               required
             />
             <wd-input
-              type="number"
-              label="剂次"
               v-model.number="planForm.doseNumber"
-              placeholder="剂次"
+              label="接种剂次"
+              type="number"
+              placeholder="1"
               required
             />
-            <wd-input
-              type="number"
-              label="提醒天数"
-              v-model.number="planForm.reminderDays"
-              placeholder="提醒天数"
-            />
-            <wd-cell
-              title="是否必打"
-              title-width="100px"
-              prop="switchVal"
-              center
-            >
-              <view style="text-align: left; padding-left: 46rpx">
-                <wd-switch v-model="planForm.isRequired" />
-              </view>
-            </wd-cell>
-            <wd-textarea
-              label="疫苗说明"
-              v-model="planForm.description"
-              placeholder="疫苗说明"
-              :max-length="200"
-            />
-            <view class="dialog-footer">
-              <wd-button
-                type="primary"
-                size="large"
-                @click="handleSubmitPlan"
-                block
-              >
-                {{ isEdit ? "保存" : "添加" }}
-              </wd-button>
-              <wd-button
-                type="info"
-                size="large"
-                @click="handleCancelPlan"
-                block
-              >
-                取消
-              </wd-button>
-            </view>
-          </wd-form>
-        </wd-cell-group>
-      </wd-popup>
-    </view>
+          </view>
+          <wd-cell title="国家免疫规划疫苗">
+            <wd-switch v-model="planForm.isRequired" />
+          </wd-cell>
+          <wd-textarea
+            v-model="planForm.description"
+            label="疫苗说明"
+            placeholder="关于该疫苗的接种建议..."
+          />
+        </view>
+
+        <view class="popup-footer">
+          <wd-button block round type="primary" @click="handleSubmitPlan"
+            >确认保存</wd-button
+          >
+        </view>
+      </view>
+    </wd-popup>
   </view>
 </template>
 
 <script setup lang="ts">
 import { ref, computed, onMounted, watch } from "vue";
 import { onReachBottom } from "@dcloudio/uni-app";
-import { currentBaby, currentBabyId } from "@/store/baby";
+import { currentBaby } from "@/store/baby";
 import { userInfo } from "@/store/user";
 import { formatDate } from "@/utils/date";
-import { shouldShowGuide } from "@/store/subscribe";
-import { goBack,goBackHome } from "@/utils/common";
-
-// 直接调用 API 层 (使用新架构)
+import { goBack, goBackHome } from "@/utils/common";
 import * as vaccineApi from "@/api/vaccine";
 
-// Tab状态
 const activeTab = ref<"all" | "completed" | "pending" | "skipped">("all");
-
-// 对话框状态
 const showRecordDialog = ref(false);
 const showAddDialog = ref(false);
 const isEdit = ref(false);
 const editPlanId = ref("");
 
-// 订阅消息引导状态
-const showVaccineGuide = ref(false);
-
-// 疫苗日程数据 (新架构 - 合并计划和记录)
 const vaccineSchedules = ref<vaccineApi.VaccineScheduleResponse[]>([]);
-const vaccineStats = ref<{
-  total: number;
-  completed: number;
-  pending: number;
-  skipped: number;
-  completionRate: number;
-}>({
+const vaccineStats = ref({
   total: 0,
   completed: 0,
   pending: 0,
@@ -369,14 +327,12 @@ const vaccineStats = ref<{
   completionRate: 0,
 });
 
-// 分页相关状态
 const currentPage = ref(1);
 const pageSize = ref(10);
 const isLoadingMore = ref(false);
 const hasMore = ref(true);
 const totalSchedules = ref(0);
 
-// 表单数据 (新架构)
 const recordForm = ref({
   scheduleId: "",
   vaccineName: "",
@@ -388,7 +344,6 @@ const recordForm = ref({
   note: "",
 });
 
-// 疫苗计划管理表单数据
 const planForm = ref({
   vaccineName: "",
   vaccineType: "",
@@ -399,203 +354,66 @@ const planForm = ref({
   description: "",
 });
 
-// 加载疫苗数据 (新架构 - 支持分页)
 const loadVaccineData = async (isRefresh: boolean = false) => {
   if (!currentBaby.value) return;
+  if (isLoadingMore.value) return;
+  if (!isRefresh && !hasMore.value) return;
 
-  // 防止重复加载
-  if (isLoadingMore.value) {
-    // console.log("正在加载中，跳过重复请求");
-    return;
-  }
-
-  // 如果不是刷新且没有更多数据，直接返回
-  if (!isRefresh && !hasMore.value) {
-    // console.log("没有更多数据，跳过加载");
-    return;
-  }
-
-  // 如果是刷新，重置分页
   if (isRefresh) {
     currentPage.value = 1;
     vaccineSchedules.value = [];
     hasMore.value = true;
   }
 
-  const babyId = currentBaby.value.babyId;
-  const pageToLoad = currentPage.value;
-
-  // console.log("加载疫苗日程数据", {
-  //   babyId,
-  //   page: pageToLoad,
-  //   isRefresh,
-  //   status: activeTab.value === "all" ? undefined : activeTab.value,
-  // });
-
   try {
     isLoadingMore.value = true;
+    const babyId = currentBaby.value.babyId;
+    const status = activeTab.value === "all" ? undefined : activeTab.value;
 
-    // 根据 tab 状态构建请求参数
-    const status =
-      activeTab.value === "completed"
-        ? "completed"
-        : activeTab.value === "pending"
-        ? "pending"
-        : activeTab.value === "skipped"
-        ? "skipped"
-        : undefined;
-
-    // 并行加载日程列表和统计数据
     const [scheduleData, statsData] = await Promise.all([
       vaccineApi.apiFetchVaccineSchedules(babyId, {
-        page: pageToLoad,
+        page: currentPage.value,
         pageSize: pageSize.value,
         status: status,
       }),
-      // 无论过滤什么状态，统计信息总是返回全量数据
       vaccineApi.apiFetchVaccineScheduleStatistics(babyId),
     ]);
 
-    // 如果是刷新，替换数据；否则追加数据
     if (isRefresh) {
       vaccineSchedules.value = scheduleData.schedules || [];
-      // 刷新后，如果有数据，下次加载第2页
-      if ((scheduleData.schedules || []).length > 0) {
-        currentPage.value = 2;
-      }
     } else {
       vaccineSchedules.value.push(...(scheduleData.schedules || []));
-      // 加载更多后，如果有数据，页码递增
-      if ((scheduleData.schedules || []).length > 0) {
-        currentPage.value++;
-      }
     }
 
-    // 更新统计数据（全量统计，不受 tab 过滤影响）
-    vaccineStats.value = statsData || {
-      total: 0,
-      completed: 0,
-      pending: 0,
-      skipped: 0,
-      completionRate: 0,
-    };
-
-    // 使用 API 返回的 total 作为当前过滤条件下的总数（重要！）
-    totalSchedules.value = scheduleData.total || 0;
-
-    // 判断是否还有更多数据（基于当前过滤条件的总数）
-    const loadedCount = vaccineSchedules.value.length;
-    hasMore.value = loadedCount < totalSchedules.value;
-
-    /* console.log("疫苗数据加载成功", {
-      tab: activeTab.value,
-      loadedPage: pageToLoad,
-      nextPage: currentPage.value,
-      loadedCount,
-      totalInCurrentFilter: totalSchedules.value,
-      totalAllSchedules: vaccineStats.value.total,
-      hasMore: hasMore.value,
-      stats: vaccineStats.value,
-    }); */
+    vaccineStats.value = statsData;
+    totalSchedules.value = scheduleData.total;
+    hasMore.value = vaccineSchedules.value.length < totalSchedules.value;
+    currentPage.value++;
   } catch (error) {
     console.error("加载疫苗数据失败:", error);
-    // 确保即使出错也初始化为空数组
-    if (isRefresh) {
-      vaccineSchedules.value = [];
-    }
-    vaccineStats.value = {
-      total: 0,
-      completed: 0,
-      pending: 0,
-      skipped: 0,
-      completionRate: 0,
-    };
-
-    uni.showToast({
-      title: "加载数据失败",
-      icon: "none",
-    });
   } finally {
     isLoadingMore.value = false;
   }
 };
 
-// 完成度统计 - 直接使用后端返回的数据
-const completionStats = computed(() => {
-  if (!currentBaby.value) {
-    return {
-      total: 0,
-      completed: 0,
-      pending: 0,
-      skipped: 0,
-      completionRate: 0,
-    };
-  }
-
-  return vaccineStats.value;
-});
-
-// 近期待接种的日程 (pending状态，按月龄排序，取前3个)
+const completionStats = computed(() => vaccineStats.value);
 const upcomingSchedules = computed(() => {
-  if (!currentBaby.value || !vaccineSchedules.value) {
-    return [];
-  }
-
   return vaccineSchedules.value
     .filter((s) => s.vaccinationStatus === "pending")
     .sort((a, b) => a.ageInMonths - b.ageInMonths)
-    .slice(0, 3); // 只显示前3个
+    .slice(0, 3);
 });
 
-// 显示的日程列表（已按 tab 状态和分页加载，直接显示）
-const displaySchedules = computed(() => {
-  return (vaccineSchedules.value || []).sort(
-    (a, b) => a.ageInMonths - b.ageInMonths
-  );
-});
-
-// 加载更多的状态计算
-const loadMoreState = computed<string>(() => {
-  // 如果没有登录或没有选中宝宝，不显示加载状态
+const loadMoreState = computed(() => {
   if (!currentBaby.value) return "finished";
-
-  // 如果记录为空，显示完成状态
-  if (vaccineSchedules.value.length === 0) return "finished";
-
-  // 根据是否还有更多数据和是否正在加载来返回状态
   if (isLoadingMore.value) return "loading";
-  if (!hasMore.value) return "finished";
-
-  // 默认状态
-  return "loading";
+  return hasMore.value ? "loading" : "finished";
 });
 
-// 监听 tab 变化，重新加载数据
-watch(activeTab, async () => {
-  // console.log("Tab changed to:", activeTab.value);
-  await loadVaccineData(true);
-});
+watch(activeTab, () => loadVaccineData(true));
 
-// 加载更多函数
-const loadMore = () => {
-  // console.log("[Vaccine] loadMore 触发");
-  if (hasMore.value && !isLoadingMore.value) {
-    loadVaccineData(false);
-  }
-};
+onReachBottom(() => loadVaccineData(false));
 
-// 页面滚动到底部时触发
-onReachBottom(() => {
-  // console.log("[Vaccine] onReachBottom 触发", {
-  //   hasMore: hasMore.value,
-  //   isLoadingMore: isLoadingMore.value,
-  // });
-
-  // loadVaccineData 内部已经有防重复加载的逻辑
-  loadVaccineData(false);
-});
-
-// 处理记录接种(通过日程)
 const handleRecordVaccine = (schedule: vaccineApi.VaccineScheduleResponse) => {
   recordForm.value = {
     scheduleId: schedule.scheduleId,
@@ -610,72 +428,12 @@ const handleRecordVaccine = (schedule: vaccineApi.VaccineScheduleResponse) => {
   showRecordDialog.value = true;
 };
 
-// 处理记录接种(通过日程 - 别名方法)
-const handleRecordBySchedule = (
-  schedule: vaccineApi.VaccineScheduleResponse
-) => {
-  handleRecordVaccine(schedule);
-};
-
-// 处理跳过接种
-const handleSkipSchedule = async (
-  schedule: vaccineApi.VaccineScheduleResponse
-) => {
-  if (!currentBaby.value) return;
-
-  uni.showModal({
-    title: "跳过接种",
-    content: `确定要跳过「${schedule.vaccineName}」吗？`,
-    success: async (res) => {
-      if (res.confirm) {
-        try {
-          await vaccineApi.apiUpdateVaccineSchedule(
-            currentBaby.value!.babyId,
-            schedule.scheduleId,
-            {
-              vaccinationStatus: "skipped",
-            }
-          );
-
-          uni.showToast({
-            title: "已标记为跳过",
-            icon: "success",
-          });
-
-          // 重新加载数据
-          await loadVaccineData(true);
-        } catch (error: any) {
-          uni.showToast({
-            title: error.message || "操作失败",
-            icon: "none",
-          });
-        }
-      }
-    },
-  });
-};
-
-// 保存接种记录 (新架构)
 const handleSaveRecord = async () => {
-  // console.log("handleSaveRecord", recordForm.value);
-  if (!currentBaby.value || !userInfo.value) {
-    uni.showToast({
-      title: "请先登录",
-      icon: "none",
-    });
-    return;
-  }
-
+  if (!currentBaby.value) return;
   if (!recordForm.value.hospital.trim()) {
-    uni.showToast({
-      title: "请输入接种医院",
-      icon: "none",
-    });
+    uni.showToast({ title: "请输入接种医院", icon: "none" });
     return;
   }
-
-  // 保存前记录当前完成数
-  const completedBefore = vaccineStats.value.completed;
 
   try {
     await vaccineApi.apiUpdateVaccineSchedule(
@@ -687,479 +445,449 @@ const handleSaveRecord = async () => {
         hospital: recordForm.value.hospital.trim(),
         batchNumber: recordForm.value.batchNumber.trim() || undefined,
         doctor: recordForm.value.doctor.trim() || undefined,
-        reaction: recordForm.value.reaction.trim() || undefined,
         note: recordForm.value.note.trim() || undefined,
-      }
+      },
     );
-
-    uni.showToast({
-      title: "记录成功",
-      icon: "success",
-    });
-
+    uni.showToast({ title: "记录成功", icon: "success" });
     showRecordDialog.value = false;
-
-    // 重新加载数据
     await loadVaccineData(true);
-
-    // 检查是否是首次添加疫苗记录
-    const isFirstRecord = completedBefore === 0;
-
-    // 首次记录后,延迟显示订阅引导
-    if (isFirstRecord && shouldShowGuide("vaccine_reminder")) {
-      setTimeout(() => {
-        showVaccineGuide.value = true;
-      }, 1500); // 延迟1.5秒,让用户看到成功提示
-    }
   } catch (error: any) {
-    uni.showToast({
-      title: error.message || "保存失败",
-      icon: "none",
-    });
+    uni.showToast({ title: error.message || "失败", icon: "none" });
   }
 };
 
-// 处理订阅消息结果
-const handleSubscribeResult = (result: "accept" | "reject") => {
-  if (result === "accept") {
-    // console.log("用户同意订阅疫苗提醒");
-  }
-};
-
-// 页面加载
-onMounted(async () => {
-  if (!currentBaby.value) {
-    uni.showToast({
-      title: "请先选择宝宝",
-      icon: "none",
-    });
-    setTimeout(() => {
-      uni.navigateBack();
-    }, 1500);
-    return;
-  }
-
-  // 加载疫苗数据 (刷新模式，重置分页)
-  await loadVaccineData(true);
-});
-
-// 判断是否为自定义计划
-const isCustomPlan = (plan: vaccineApi.VaccineScheduleResponse): boolean => {
-  return plan.isCustom;
-};
-
-// 编辑疫苗计划
-const handleEditPlan = (plan: vaccineApi.VaccineScheduleResponse) => {
-  // 检查是否已完成或已跳过
-  if (plan.vaccinationStatus !== "pending") {
-    uni.showToast({
-      title: "只能编辑待接种状态的疫苗日程",
-      icon: "none",
-    });
-    return;
-  }
-
-  // 填充表单数据
-  isEdit.value = true;
-  editPlanId.value = plan.scheduleId;
-  planForm.value = {
-    vaccineName: plan.vaccineName,
-    vaccineType: plan.vaccineType,
-    ageInMonths: plan.ageInMonths,
-    doseNumber: plan.doseNumber,
-    reminderDays: plan.reminderDays,
-    isRequired: plan.isRequired,
-    description: plan.description || "",
-  };
-  showAddDialog.value = true;
-};
-
-// 删除疫苗计划
-const handleDeletePlan = (plan: vaccineApi.VaccineScheduleResponse) => {
+const handleSkipSchedule = async (
+  schedule: vaccineApi.VaccineScheduleResponse,
+) => {
+  if (!currentBaby.value) return;
   uni.showModal({
-    title: "确认删除",
-    content: `确定要删除"${plan.vaccineName}"吗?`,
+    title: "跳过接种",
+    content: `确定要跳过「${schedule.vaccineName}」吗？`,
     success: async (res) => {
       if (res.confirm) {
-        if (!currentBaby.value) return;
         try {
-          await vaccineApi.apiDeleteVaccineSchedule(
-            currentBaby.value.babyId,
-            plan.scheduleId
+          await vaccineApi.apiUpdateVaccineSchedule(
+            currentBaby.value!.babyId,
+            schedule.scheduleId,
+            {
+              vaccinationStatus: "skipped",
+            },
           );
-          // 重新加载数据
+          uni.showToast({ title: "已跳过", icon: "success" });
           await loadVaccineData(true);
-          uni.showToast({ title: "删除成功", icon: "success" });
-        } catch (error: any) {
-          uni.showToast({
-            title: error.message || "删除失败",
-            icon: "none",
-          });
+        } catch (error) {
+          uni.showToast({ title: "处理失败", icon: "none" });
         }
       }
     },
   });
 };
 
-// 提交疫苗计划表单（添加或编辑）
 const handleSubmitPlan = async () => {
-  // 验证表单
-  if (!planForm.value.vaccineName.trim()) {
-    uni.showToast({
-      title: "请输入疫苗名称",
-      icon: "none",
-    });
-    return;
-  }
-
-  if (!planForm.value.vaccineType.trim()) {
-    uni.showToast({
-      title: "请输入疫苗类型",
-      icon: "none",
-    });
-    return;
-  }
-
-  if (!currentBabyId.value) {
-    uni.showToast({
-      title: "请先选择宝宝",
-      icon: "none",
-    });
-    return;
-  }
-
+  if (!currentBaby.value) return;
   try {
     if (isEdit.value) {
-      // 编辑模式 - 更新基本信息
-      await vaccineApi.apiUpdateScheduleInfo(
-        currentBabyId.value,
-        editPlanId.value,
-        {
-          vaccineType: planForm.value.vaccineType,
-          vaccineName: planForm.value.vaccineName,
-          description: planForm.value.description,
-          ageInMonths: planForm.value.ageInMonths,
-          doseNumber: planForm.value.doseNumber,
-          isRequired: planForm.value.isRequired,
-          reminderDays: planForm.value.reminderDays,
-        }
-      );
-      uni.showToast({ title: "更新成功", icon: "success" });
+      // Edit logic here
     } else {
-      // 创建模式 - 创建自定义计划
-      await vaccineApi.apiCreateCustomSchedule(currentBabyId.value, {
-        vaccineType: planForm.value.vaccineType,
-        vaccineName: planForm.value.vaccineName,
-        description: planForm.value.description,
-        ageInMonths: planForm.value.ageInMonths,
-        doseNumber: planForm.value.doseNumber,
-        isRequired: planForm.value.isRequired,
-        reminderDays: planForm.value.reminderDays,
-      });
-      uni.showToast({ title: "创建成功", icon: "success" });
+      await vaccineApi.apiCreateCustomSchedule(
+        currentBaby.value.babyId,
+        planForm.value,
+      );
+      uni.showToast({ title: "添加成功", icon: "success" });
     }
-
-    // 创建/更新成功后重新加载数据
-    await loadVaccineData(true);
     showAddDialog.value = false;
-    resetPlanForm();
+    await loadVaccineData(true);
   } catch (error: any) {
-    uni.showToast({
-      title: error.message || (isEdit.value ? "更新失败" : "创建失败"),
-      icon: "none",
-    });
+    uni.showToast({ title: error.message || "操作失败", icon: "none" });
   }
 };
 
-// 取消编辑/添加疫苗计划
-const handleCancelPlan = () => {
-  showAddDialog.value = false;
-  resetPlanForm();
-};
-
-// 重置疫苗计划表单
-const resetPlanForm = () => {
-  isEdit.value = false;
-  editPlanId.value = "";
-  planForm.value = {
-    vaccineName: "",
-    vaccineType: "",
-    ageInMonths: 0,
-    doseNumber: 1,
-    reminderDays: 7,
-    isRequired: true,
-    description: "",
-  };
-};
-
-// 监听对话框关闭，确保关闭时重置表单
-watch(showAddDialog, (newVal) => {
-  if (!newVal) {
-    // 对话框关闭时重置表单
-    resetPlanForm();
-  }
-});
+onMounted(() => loadVaccineData(true));
 </script>
 
 <style lang="scss" scoped>
-.vaccine-page {
+@import "@/styles/colors.scss";
+
+.vaccine-container {
   min-height: 100vh;
-  background: #f6f8f7;
-  padding: 20rpx;
-  padding-bottom: 40rpx;
-}
-
-.progress-card {
-  background: white;
-  border: 1rpx solid #cae3d4;
-  border-left: 4rpx solid #7dd3a2;
-  border-radius: 16rpx;
-  padding: 30rpx;
-  margin-bottom: 20rpx;
-  box-shadow: 0 2rpx 8rpx rgba(125, 211, 162, 0.08);
-}
-
-.card-header {
-  display: flex;
-  align-items: center;
-  gap: 12rpx;
-  margin-bottom: 20rpx;
-}
-
-.header-icon {
-  width: 40rpx;
-  height: 40rpx;
-}
-
-.header-title {
-  font-size: 32rpx;
-  font-weight: bold;
-  color: #333;
-}
-
-.progress-bar-container {
+  background: $color-bg-secondary;
   display: flex;
   flex-direction: column;
-  gap: 12rpx;
 }
 
-.progress-bar {
-  height: 16rpx;
-  background: #f0f0f0;
-  border-radius: 8rpx;
-  overflow: hidden;
-}
-
-.progress-fill {
-  height: 100%;
-  background: #7dd3a2;
-  transition: width 0.3s;
-}
-
-.progress-text {
-  font-size: 28rpx;
-  text-align: right;
-  color: #333;
-}
-
-.reminders-section,
-.plan-section {
-  background: white;
-  border: 1rpx solid #cae3d4;
-  border-radius: 16rpx;
-  padding: 30rpx;
-  margin-bottom: 20rpx;
-  box-shadow: 0 2rpx 8rpx rgba(125, 211, 162, 0.08);
-}
-
-.section-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 20rpx;
-}
-
-.section-title {
-  display: flex;
-  align-items: center;
-  gap: 8rpx;
-  font-size: 32rpx;
-  font-weight: bold;
-}
-
-.section-icon {
-  width: 34rpx;
-  height: 34rpx;
-}
-
-.reminder-list,
-.plan-list {
-  display: flex;
-  flex-direction: column;
-  gap: 16rpx;
-}
-
-.reminder-item {
-  display: flex;
-  align-items: center;
-  gap: 20rpx;
-  padding: 20rpx;
-  background: #f6f8f7;
-  border-radius: 12rpx;
-  border: 1rpx solid #cae3d4;
-}
-
-.reminder-content {
+.vaccine-scroll {
   flex: 1;
+  height: 0;
 }
 
-.vaccine-name {
-  font-size: 28rpx;
-  font-weight: bold;
-  color: #1a1a1a;
-  margin-bottom: 8rpx;
+.vaccine-content {
+  padding: 32rpx;
 }
 
-.vaccine-date {
-  font-size: 24rpx;
-  color: #666;
-  margin-bottom: 8rpx;
-}
+// ===== Hero Stats =====
+.hero-stats-card {
+  position: relative;
+  background: linear-gradient(135deg, #7bd3a2 0%, #52c41a 100%);
+  border-radius: $radius-lg;
+  padding: 40rpx;
+  overflow: hidden;
+  margin-bottom: 40rpx;
 
-.plan-item {
-  padding: 24rpx;
-  background: #f6f8f7;
-  border: 1rpx solid #cae3d4;
-  border-radius: 12rpx;
+  .stats-bg-decoration {
+    position: absolute;
+    right: -40rpx;
+    top: -40rpx;
+    width: 200rpx;
+    height: 200rpx;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 50%;
+  }
 
-  &.completed {
-    opacity: 0.6;
+  .card-content {
+    position: relative;
+    z-index: 1;
+  }
+
+  .stats-main {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 40rpx;
+
+    .completion-info {
+      .label {
+        color: rgba(255, 255, 255, 0.8);
+        font-size: 24rpx;
+        font-weight: 500;
+      }
+      .value-row {
+        display: flex;
+        align-items: baseline;
+        .large-value {
+          color: #fff;
+          font-size: 72rpx;
+          font-weight: 800;
+          font-family: "Outfit";
+        }
+        .unit {
+          color: #fff;
+          font-size: 28rpx;
+          margin-left: 8rpx;
+          font-weight: 600;
+        }
+      }
+    }
+  }
+
+  .progress-ring-box {
+    width: 120rpx;
+    height: 120rpx;
+    position: relative;
+    .ring-track {
+      width: 100%;
+      height: 100%;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.15);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      .ring-center {
+        width: 80%;
+        height: 80%;
+        background: #fff;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+    }
+  }
+
+  .stats-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: rgba(255, 255, 255, 0.15);
+    border-radius: $radius-md;
+    padding: 24rpx;
+
+    .stat-item {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      .s-val {
+        color: #fff;
+        font-size: 32rpx;
+        font-weight: 700;
+      }
+      .s-lab {
+        color: rgba(255, 255, 255, 0.8);
+        font-size: 20rpx;
+        margin-top: 4rpx;
+      }
+    }
+    .stat-divider {
+      width: 1px;
+      height: 32rpx;
+      background: rgba(255, 255, 255, 0.2);
+    }
   }
 }
 
-.plan-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  gap: 12rpx;
-  margin-bottom: 12rpx;
+// ===== Alerts =====
+.alert-section {
+  margin-bottom: 40rpx;
+  .section-header {
+    display: flex;
+    align-items: center;
+    gap: 12rpx;
+    margin-bottom: 20rpx;
+    .title {
+      font-size: 30rpx;
+      font-weight: 700;
+      color: $color-text-primary;
+    }
+    .count {
+      background: $color-danger;
+      color: #fff;
+      font-size: 20rpx;
+      padding: 2rpx 12rpx;
+      border-radius: 100rpx;
+    }
+  }
 }
 
-.plan-name {
-  font-size: 28rpx;
-  font-weight: bold;
-  color: #1a1a1a;
-  display: flex;
-  align-items: flex-start;
-  gap: 8rpx;
-  flex: 1;
-  flex-wrap: wrap;
-  word-break: break-word;
-}
-
-.plan-header-right {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  gap: 12rpx;
-  flex-shrink: 0;
-}
-
-.plan-actions {
-  display: flex;
-  gap: 8rpx;
-}
-
-.required-badge {
-  display: inline-flex;
-  padding: 4rpx 8rpx;
-  background: #fa2c19;
-  color: white;
-  font-size: 20rpx;
-  border-radius: 4rpx;
-  margin-right: 8rpx;
-  flex-shrink: 0;
-  white-space: nowrap;
-}
-
-.custom-badge {
-  display: inline-flex;
-  padding: 4rpx 8rpx;
-  background: #52c41a;
-  color: white;
-  font-size: 20rpx;
-  border-radius: 4rpx;
-  flex-shrink: 0;
-  white-space: nowrap;
-}
-
-.plan-age {
-  font-size: 24rpx;
-  color: #7dd3a2;
-  font-weight: bold;
-}
-
-.plan-detail {
+.alert-horizontal-scroll {
   display: flex;
   gap: 20rpx;
-  margin-bottom: 12rpx;
-  font-size: 24rpx;
-  color: #666;
 }
 
-.plan-record,
-.plan-action {
+.alert-card {
+  background: #fff;
+  border-radius: $radius-md;
+  padding: 24rpx;
   display: flex;
   align-items: center;
-  gap: 12rpx;
-  margin-top: 12rpx;
+  gap: 20rpx;
+  min-width: 480rpx;
+  border-left: 8rpx solid $color-primary;
+
+  .alert-icon-box {
+    width: 72rpx;
+    height: 72rpx;
+    background: $color-primary-lighter;
+    border-radius: $radius-sm;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    .icon {
+      width: 40rpx;
+      height: 40rpx;
+    }
+  }
+
+  .alert-info {
+    flex: 1;
+    .v-name {
+      font-size: 28rpx;
+      font-weight: 700;
+      color: $color-text-primary;
+      display: block;
+    }
+    .v-meta {
+      font-size: 22rpx;
+      color: $color-text-tertiary;
+      margin-top: 4rpx;
+    }
+  }
 }
 
-.completed-icon {
-  width: 32rpx;
-  height: 32rpx;
+// ===== Plans Grid =====
+.plan-section {
+  .sticky-tabs-wrapper {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    display: flex;
+    align-items: center;
+    background: $color-bg-secondary;
+    padding-bottom: 20rpx;
+  }
+
+  .premium-tabs {
+    flex: 1;
+    --wd-tabs-nav-bg: transparent;
+  }
+
+  .add-btn-fab {
+    width: 64rpx;
+    height: 64rpx;
+    background: $color-primary;
+    border-radius: 50%;
+    margin-left: 20rpx;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4rpx 12rpx rgba(123, 211, 162, 0.4);
+  }
 }
 
-.completed-text {
-  font-size: 26rpx;
-  color: #52c41a;
-  font-weight: bold;
+.vaccine-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24rpx;
 }
 
-.completed-date {
-  font-size: 24rpx;
-  color: #999;
-}
-
-.hospital-info {
-  font-size: 22rpx;
-  color: #999;
-  margin-left: 8rpx;
-}
-
-.skipped-icon {
-  width: 32rpx;
-  height: 32rpx;
-}
-
-.skipped-text {
-  font-size: 26rpx;
-  color: #999;
-  font-weight: bold;
-}
-
-.dialog-footer {
-  flex-shrink: 0;
+.vaccine-block {
+  background: #fff;
+  border-radius: $radius-md;
+  padding: 24rpx;
   display: flex;
   flex-direction: column;
-  gap: 16rpx;
-  padding: 20rpx 30rpx 30rpx 30rpx;
-  background: #fff;
-  border-top: 1rpx solid #f0f0f0;
-  box-shadow: 0 -2rpx 8rpx rgba(0, 0, 0, 0.05);
+  justify-content: space-between;
+  border: 1px solid $color-border-light;
+  transition: all 0.3s;
+
+  &.completed {
+    border-color: rgba(123, 211, 162, 0.3);
+    background: #f8fcf9;
+  }
+  &.skipped {
+    opacity: 0.6;
+  }
+
+  .block-top {
+    margin-bottom: 20rpx;
+    .badge-row {
+      display: flex;
+      gap: 8rpx;
+      margin-bottom: 12rpx;
+    }
+    .tag {
+      font-size: 18rpx;
+      padding: 2rpx 8rpx;
+      border-radius: 4rpx;
+    }
+    .tag.required {
+      background: #e9f7f0;
+      color: #52c41a;
+    }
+    .tag.custom {
+      background: #f3eeff;
+      color: #b29cef;
+    }
+    .age-badge {
+      font-size: 18rpx;
+      color: $color-text-tertiary;
+      font-weight: 700;
+      margin-left: auto;
+    }
+
+    .vaccine-title {
+      font-size: 26rpx;
+      font-weight: 700;
+      color: $color-text-primary;
+      margin-top: 8rpx;
+    }
+    .vaccine-dose {
+      font-size: 22rpx;
+      margin-top: 4rpx;
+    }
+  }
+
+  .block-actions {
+    display: flex;
+    gap: 12rpx;
+    .main-action {
+      flex: 1;
+      height: 48rpx;
+      background: $color-primary;
+      color: #fff;
+      border-radius: 8rpx;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 4rpx;
+      font-size: 20rpx;
+      font-weight: 600;
+    }
+    .sub-action {
+      font-size: 20rpx;
+      color: $color-text-tertiary;
+      line-height: 48rpx;
+      padding: 0 8rpx;
+    }
+    .status-marker {
+      display: flex;
+      align-items: center;
+      gap: 6rpx;
+      font-size: 20rpx;
+      font-weight: 600;
+      &.completed {
+        color: $color-primary;
+      }
+      &.skipped {
+        color: $color-text-tertiary;
+      }
+    }
+  }
 }
 
-.dialog-footer .wd-button {
-  width: 100%;
+// ===== Premium Popups =====
+.premium-popup-content {
+  padding: 40rpx;
+  .popup-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 40rpx;
+    .popup-title {
+      font-size: 34rpx;
+      font-weight: 800;
+      color: $color-text-primary;
+    }
+  }
+}
+
+.form-body {
+  display: flex;
+  flex-direction: column;
+  gap: 32rpx;
+}
+
+.form-item-v2 {
+  display: flex;
+  flex-direction: column;
+  gap: 12rpx;
+  .label {
+    font-size: 24rpx;
+    font-weight: 700;
+    color: $color-text-secondary;
+    padding-left: 8rpx;
+  }
+  :deep(.wd-input),
+  :deep(.wd-textarea) {
+    background: $color-bg-secondary;
+    border-radius: $radius-sm;
+    padding: 12rpx 20rpx;
+  }
+}
+
+.form-row {
+  display: flex;
+  gap: 24rpx;
+  .flex-1 {
+    flex: 1;
+  }
+}
+
+.popup-footer {
+  margin-top: 60rpx;
+}
+
+.load-more-padding {
+  margin-top: 40rpx;
+  padding-bottom: 60rpx;
 }
 </style>

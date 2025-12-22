@@ -1,293 +1,247 @@
 <template>
-  <view class="daily-tips-card" v-if="tips && tips.length > 0">
-    <!-- 卡片头部 -->
+  <view v-if="tips && tips.length > 0" class="premium-tips-card">
     <view class="tips-header">
-      <view class="header-left">
-        <view class="ai-icon-wrapper">
+      <view class="header-main">
+        <view class="ai-sparkle">
           <image
             src="/static/smart_toy.svg"
-            mode="aspectFill"
-            class="ai-icon"
+            mode="aspectFit"
+            class="sparkle-icon"
           />
         </view>
-        <view class="header-text">
-          <text class="header-title">今日建议</text>
-          <text class="header-subtitle">个性化智能推荐</text>
+        <view class="title-group">
+          <text class="title">智护建议</text>
+          <text class="subtitle">AI为您定制的科学养育锦囊</text>
         </view>
       </view>
-      <!-- 移除右侧文案区域 -->
     </view>
 
-    <!-- 建议内容 - 横向滚动 -->
-    <scroll-view scroll-x class="tips-scroll" show-scrollbar="false">
-      <view class="tips-container">
-        <view
-          v-for="(tip, index) in displayTips"
-          :key="index"
-          class="tip-card clickable"
-          @click="handleTipClick(tip)"
-        >
-          <view class="tip-header">
-            <text class="tip-title">{{ tip.title }}</text>
-            <!-- 添加点击指示器 -->
-            <view class="click-indicator">
-              <wd-icon name="arrow-right" size="14" color="#999" />
-            </view>
-          </view>
-          <text class="tip-description">{{ tip.description }}</text>
+    <view class="tips-masonry">
+      <view
+        v-for="(tip, index) in displayTips"
+        :key="index"
+        class="tip-brick premium-shadow"
+        :class="['prio-' + tip.priority]"
+        @click="handleTipClick(tip)"
+      >
+        <view class="brick-header">
+          <view class="prio-dot"></view>
+          <text class="brick-top-text">{{ tip.type }}</text>
+        </view>
+        <text class="brick-title">{{ tip.title }}</text>
+        <text class="brick-desc">{{ tip.description }}</text>
+        <view class="brick-footer">
+          <text class="read-more">点击详情</text>
+          <wd-icon name="arrow-right" size="12" />
         </view>
       </view>
-    </scroll-view>
-
-    <!-- 空状态 -->
-    <view class="tips-empty" v-if="!tips || tips.length === 0">
-      <view class="empty-icon">💡</view>
-      <text class="empty-text">暂无今日建议</text>
-      <text class="empty-subtext">AI正在为您准备个性化建议</text>
     </view>
+  </view>
+
+  <!-- 空状态 -->
+  <view v-else class="empty-glass-tips">
+    <view class="glass-orb"></view>
+    <text class="empty-text">AI正在分析宝宝状态...</text>
   </view>
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed } from "vue";
 
-// 临时类型定义，避免导入问题
 interface DailyTip {
-  id: string
-  title: string
-  description: string
-  type: string
-  priority: 'high' | 'medium' | 'low'
+  id: string;
+  title: string;
+  description: string;
+  type: string;
+  priority: "high" | "medium" | "low";
 }
 
-// Props
 interface Props {
-  tips?: DailyTip[]
-  maxDisplay?: number
+  tips?: DailyTip[];
+  maxDisplay?: number;
 }
 
 const props = withDefaults(defineProps<Props>(), {
-  maxDisplay: 3
-})
+  tips: () => [],
+  maxDisplay: 3,
+});
 
-// Emits
 const emit = defineEmits<{
-  tipClick: [tip: DailyTip]
-}>()
+  tipClick: [tip: DailyTip];
+}>();
 
-// 显示的建议数量
 const displayTips = computed(() => {
-  if (!props.tips) return []
-  return props.tips.slice(0, props.maxDisplay)
-})
+  if (!props.tips) return [];
+  return props.tips.slice(0, props.maxDisplay);
+});
 
-
-// 处理建议点击
 const handleTipClick = (tip: DailyTip) => {
-  emit('tipClick', tip)
-}
+  emit("tipClick", tip);
+};
 </script>
 
 <style lang="scss" scoped>
-@import '@/styles/colors.scss';
+@import "@/styles/colors.scss";
 
-.daily-tips-card {
-  background: $color-bg-primary;
-  border: 1rpx solid $color-border-primary;
-  border-radius: $radius-lg;
-  padding: $spacing-lg $spacing-md;
-  margin-bottom: $spacing-2xl;
+.premium-tips-card {
+  padding: 12rpx 0;
 }
 
 .tips-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: $spacing-lg;
-}
-
-.header-left {
-  display: flex;
-  align-items: center;
-  gap: 12rpx;
-}
-
-.ai-icon-wrapper {
-  width: 48rpx;
-  height: 48rpx;
-  border-radius: $radius-full;
-  background: $color-primary-lighter;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.ai-icon {
-  width: 44rpx;
-  height: 44rpx;
-}
-
-
-.header-text {
-  display: flex;
-  flex-direction: column;
-  gap: 2rpx;
-}
-
-.header-title {
-  font-size: 28rpx;
-  font-weight: $font-weight-semibold;
-  color: $color-text-primary;
-}
-
-.header-subtitle {
-  font-size: 22rpx;
-  color: $color-text-secondary;
-}
-
-.tips-scroll {
-  width: 100%;
-  white-space: nowrap;
-}
-
-.tips-container {
-  display: flex;
-  gap: $spacing-md;
-  padding: 0 $spacing-md;
-}
-
-.tip-card {
-  min-width: 280rpx;
-  max-width: 320rpx;
-  background: $color-bg-secondary;
-  border: 1rpx solid $color-border-primary;
-  border-radius: $radius-md;
-  padding: $spacing-lg $spacing-md;
-  display: flex;
-  flex-direction: column;
-  gap: $spacing-md;
-  transition: all $transition-base;
-  position: relative;
-  overflow: hidden;
-  cursor: pointer;
-
-  // 添加微妙的渐变效果
-  &::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 2rpx;
-    background: linear-gradient(90deg, transparent, $color-primary-light, transparent);
-    opacity: 0;
-    transition: opacity 0.3s ease;
+  margin-bottom: 24rpx;
+  .header-main {
+    display: flex;
+    align-items: center;
+    gap: 16rpx;
   }
-
-  // 悬停效果
-  &:hover {
-    background: rgba($color-primary, 0.05);
-
-    &::before {
-      opacity: 0.6;
+  .ai-sparkle {
+    width: 64rpx;
+    height: 64rpx;
+    background: linear-gradient(135deg, $color-primary-light 0%, #fff 100%);
+    border-radius: 20rpx;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4rpx 12rpx rgba(123, 211, 162, 0.2);
+    .sparkle-icon {
+      width: 44rpx;
+      height: 44rpx;
     }
   }
+  .title-group {
+    display: flex;
+    flex-direction: column;
+    .title {
+      font-size: 30rpx;
+      font-weight: 800;
+      color: $color-text-primary;
+    }
+    .subtitle {
+      font-size: 22rpx;
+      color: $color-text-tertiary;
+      margin-top: 2rpx;
+    }
+  }
+}
 
-  // 按压效果
+.tips-masonry {
+  display: flex;
+  flex-direction: column;
+  gap: 20rpx;
+}
+
+.tip-brick {
+  background: #fff;
+  border-radius: $radius-md;
+  padding: 32rpx;
+  border: 1px solid $color-border-light;
+  transition: all 0.3s;
+
   &:active {
     transform: scale(0.98);
-    box-shadow: inset 0 2rpx 8rpx rgba(0, 0, 0, 0.1);
+    background: $color-bg-secondary;
+  }
+
+  .brick-header {
+    display: flex;
+    align-items: center;
+    gap: 12rpx;
+    margin-bottom: 12rpx;
+    .prio-dot {
+      width: 12rpx;
+      height: 12rpx;
+      border-radius: 50%;
+      background: $color-primary;
+    }
+    .brick-top-text {
+      font-size: 20rpx;
+      font-weight: 700;
+      color: $color-text-tertiary;
+      text-transform: uppercase;
+    }
+  }
+
+  &.prio-high .prio-dot {
+    background: $color-danger;
+  }
+  &.prio-medium .prio-dot {
+    background: $color-warning;
+  }
+
+  .brick-title {
+    font-size: 28rpx;
+    font-weight: 700;
+    color: $color-text-primary;
+    margin-bottom: 8rpx;
+    display: block;
+  }
+
+  .brick-desc {
+    font-size: 24rpx;
+    color: $color-text-secondary;
+    line-height: 1.6;
+    display: block;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+    -webkit-box-orient: vertical;
+  }
+
+  .brick-footer {
+    margin-top: 20rpx;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 4rpx;
+    .read-more {
+      font-size: 22rpx;
+      font-weight: 600;
+      color: $color-primary;
+    }
+    :deep(.wd-icon) {
+      color: $color-primary;
+    }
   }
 }
 
-.tip-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8rpx;
-}
-
-.tip-title {
-  font-size: 28rpx;
-  color: $color-text-primary;
-  font-weight: 350;
-  text-align: left;
-  line-height: 1.4;
-  flex: 1;
-}
-
-// 点击指示器
-.click-indicator {
-  opacity: 0.6;
-  transition: all 0.2s ease;
-  margin-left: 8rpx;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  height: 28rpx; // 与标题行高匹配，确保垂直居中
-
-  .tip-card:hover & {
-    opacity: 1;
-    transform: translateX(2rpx);
-  }
-}
-
-.tip-description {
-  font-size: 24rpx;
-  color: $color-text-secondary;
-  line-height: 1.5;
-  width: 100%;
-  height: 72rpx;
-  overflow: hidden;
-  word-wrap: break-word;
-  white-space: normal;
-  display: -webkit-box;
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 2;
-  line-clamp: 2;
-  text-overflow: ellipsis;
-}
-
-.tips-empty {
+.empty-glass-tips {
+  padding: 60rpx 0;
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
-  padding: 60rpx 0;
-  text-align: center;
-}
-
-.empty-icon {
-  font-size: 48rpx;
-  margin-bottom: $spacing-md;
-  opacity: 0.6;
-}
-
-.empty-text {
-  font-size: 26rpx;
-  color: $color-text-secondary;
-  margin-bottom: 8rpx;
-}
-
-.empty-subtext {
-  font-size: 22rpx;
-  color: $color-text-tertiary;
-}
-
-// 暗色模式适配
-@media (prefers-color-scheme: dark) {
-  .daily-tips-card {
-    background: #1a1a1a;
-    border-color: #333333;
+  gap: 20rpx;
+  .glass-orb {
+    width: 60rpx;
+    height: 60rpx;
+    background: linear-gradient(
+      135deg,
+      rgba(123, 211, 162, 0.4),
+      rgba(123, 211, 162, 0.1)
+    );
+    border-radius: 50%;
+    filter: blur(10rpx);
+    animation: pulse 2s infinite;
   }
+  .empty-text {
+    font-size: 24rpx;
+    color: $color-text-tertiary;
+  }
+}
 
-  .tip-card {
-    background: #2a2a2a;
-    border-color: #444444;
-
-    &:hover {
-      background: rgba($color-primary, 0.1);
-    }
+@keyframes pulse {
+  0% {
+    transform: scale(1);
+    opacity: 0.5;
+  }
+  50% {
+    transform: scale(1.2);
+    opacity: 0.8;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 0.5;
   }
 }
 </style>

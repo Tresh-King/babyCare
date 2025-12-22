@@ -1,70 +1,89 @@
 <template>
-  <view>
+  <view class="profile-container">
     <wd-navbar
-      title="编辑资料"
+      title="个人资料"
       left-text="返回"
       left-arrow
-      safeAreaInsetTop
-      placeholder
       fixed
-    >
-      <template #capsule>
-        <wd-navbar-capsule @back="goBack" @back-home="goBackHome" />
-      </template>
-    </wd-navbar>
-    <view class="profile-page">
-      <wd-message-box />
-      <wd-toast />
+      placeholder
+      safe-area-inset-top
+      @click-left="goBack"
+    />
 
-      <!-- 头像编辑 -->
-      <wd-cell-group custom-class="group" title="个人信息" border>
-        <wd-cell title="头像" title-width="200rpx">
-          <view class="avatar-section">
-            <button open-type="chooseAvatar" @chooseavatar="onChooseAvatar">
-              <image
-                :src="formData.avatarUrl || '/static/default.png'"
-                class="avatar-preview"
-                mode="aspectFill"
+    <scroll-view class="profile-scroll" scroll-y>
+      <view class="profile-content">
+        <!-- 头像大卡片 (Premium Style) -->
+        <view class="avatar-hero-card premium-shadow">
+          <button
+            class="avatar-trigger"
+            open-type="chooseAvatar"
+            @chooseavatar="onChooseAvatar"
+          >
+            <image
+              :src="formData.avatarUrl || '/static/default.png'"
+              mode="aspectFill"
+              class="avatar-img"
+            />
+            <view class="camera-fab">
+              <wd-icon name="camera" size="18" color="#FFF" />
+            </view>
+          </button>
+          <text class="upload-hint">点击同步微信头像</text>
+        </view>
+
+        <!-- 表单卡片 -->
+        <view class="form-card premium-shadow">
+          <view class="form-item-premium">
+            <view class="l">
+              <text class="label">我的昵称</text>
+              <input
+                v-model="formData.nickName"
+                type="nickname"
+                class="nickname-input"
+                placeholder="点击设置昵称"
+                @blur="onNicknameBlur"
               />
-            </button>
+            </view>
+            <wd-icon name="edit-1" size="16" color="#94A3B8" />
           </view>
-        </wd-cell>
 
-        <!-- 昵称编辑 -->
-        <wd-cell title="昵称" title-width="200rpx">
-          <view class="nickname-section">
-            <!-- 微信原生昵称输入框 -->
-            <input
-              type="nickname"
-              class="nickname-input"
-              v-model="formData.nickName"
-              placeholder="请输入昵称"
-              maxlength="20"
-              @blur="onNicknameBlur"
+          <view class="form-divider"></view>
+
+          <view class="form-item-premium readonly">
+            <view class="l">
+              <text class="label">账户 ID</text>
+              <text class="val-txt">{{
+                formData.openid ? formData.openid.slice(0, 16) + "..." : "-"
+              }}</text>
+            </view>
+            <wd-icon
+              name="copy"
+              size="16"
+              color="#CBD5E1"
+              @click="handleCopyId"
             />
           </view>
-        </wd-cell>
+        </view>
 
-        <!-- 用户ID(只读) -->
-        <wd-cell title="用户ID" title-width="200rpx">
-          <text class="user-id">{{
-            formData.openid ? formData.openid.slice(0, 12) + "..." : "-"
-          }}</text>
-        </wd-cell>
-      </wd-cell-group>
-
-      <!-- 底部按钮 -->
-      <view class="footer">
-        <wd-button
-          type="primary"
-          size="large"
-          block
-          :loading="isSubmitting"
-          @click="handleSubmit"
-        >
-          保存更改
-        </wd-button>
+        <view class="info-guide">
+          <wd-icon name="info-circle" size="14" />
+          <text>完善个人资料，让协作成员更清晰地识别您</text>
+        </view>
       </view>
+    </scroll-view>
+
+    <!-- 底部按钮 -->
+    <view class="safe-bottom-dock">
+      <wd-button
+        block
+        round
+        type="primary"
+        size="large"
+        :loading="isSubmitting"
+        @click="handleSubmit"
+      >
+        确认并保存
+      </wd-button>
     </view>
   </view>
 </template>
@@ -74,19 +93,16 @@ import { ref, onMounted } from "vue";
 import { getUserInfo, setUserInfo } from "@/store/user";
 import { uploadFile } from "@/utils/request";
 import * as authApi from "@/api/auth";
-import { goBack, goBackHome } from "@/utils/common";
+import { goBack } from "@/utils/common";
 
-// 表单数据
 const formData = ref({
   openid: "",
   nickName: "",
   avatarUrl: "",
 });
 
-// 提交状态
 const isSubmitting = ref(false);
 
-// 页面加载
 onMounted(() => {
   const user = getUserInfo();
   if (user) {
@@ -98,130 +114,46 @@ onMounted(() => {
   }
 });
 
-// 微信头像选择器
 const onChooseAvatar = async (e: any) => {
-  console.log("[Profile] 选择微信头像:", e.detail.avatarUrl);
-
-  // 使用封装的uploadFile函数
-  const uploadResult: any = await uploadFile({
-    filePath: e.detail.avatarUrl,
-    name: "file",
-    formData: {
-      type: "user_avatar",
-    },
-  });
-  console.log("[Profile] 上传结果:", uploadResult);
-  // 解析响应数据
-  if (uploadResult.code === 0) {
-    formData.value.avatarUrl = uploadResult.data.url;
-
-    uni.showToast({
-      title: "上传成功",
-      icon: "success",
+  try {
+    uni.showLoading({ title: "上传中..." });
+    const result: any = await uploadFile({
+      filePath: e.detail.avatarUrl,
+      name: "file",
+      formData: { type: "user_avatar" },
     });
+    if (result.code === 0) {
+      formData.value.avatarUrl = result.data.url;
+      uni.showToast({ title: "已同步头像", icon: "success" });
+    }
+  } catch (e) {
+  } finally {
+    uni.hideLoading();
   }
-  uni.showToast({
-    title: "头像已更新",
-    icon: "success",
-    duration: 1500,
-  });
 };
 
-// 上传本地图片
-const uploadLocalImage = () => {
-  uni.chooseImage({
-    count: 1,
-    sizeType: ["compressed"],
-    sourceType: ["album", "camera"],
-    success: async (res) => {
-      const tempFilePath = res.tempFilePaths[0];
-      if (!tempFilePath) return;
-
-      try {
-        // 显示上传中提示
-        uni.showLoading({
-          title: "上传中...",
-          mask: true,
-        });
-
-        // 使用封装的uploadFile函数
-        const uploadResult: any = await uploadFile({
-          filePath: tempFilePath,
-          name: "file",
-          formData: {
-            type: "user_avatar",
-          },
-        });
-
-        // 解析响应数据
-        if (uploadResult.code === 0) {
-          formData.value.avatarUrl = uploadResult.data.url;
-          isSubmitting.value = true;
-
-          // 调用更新接口
-          const result = await authApi.apiUpdateUserInfo({
-            nickName: formData.value.nickName,
-            avatarUrl: formData.value.avatarUrl,
-          });
-          if (result) {
-            // 更新本地状态
-            const user = getUserInfo();
-            if (user) {
-              setUserInfo({
-                ...user,
-                nickName: formData.value.nickName,
-                avatarUrl: formData.value.avatarUrl,
-              });
-            }
-          }
-        } else {
-          throw new Error(uploadResult.message || "上传失败");
-        }
-      } catch (error: any) {
-        console.error("[Profile] 上传头像失败:", error);
-        uni.showToast({
-          title: error.message || "上传失败",
-          icon: "none",
-        });
-      } finally {
-        uni.hideLoading();
-      }
-    },
-    fail: (err) => {
-      console.error("[Profile] 选择图片失败:", err);
-      uni.showToast({
-        title: "选择图片失败",
-        icon: "none",
-      });
-    },
-  });
-};
-
-// 昵称输入完成
 const onNicknameBlur = () => {
-  console.log("[Profile] 昵称已输入:", formData.value.nickName);
+  // Sync with input value
 };
 
-// 提交表单
+const handleCopyId = () => {
+  uni.setClipboardData({
+    data: formData.value.openid,
+    success: () => uni.showToast({ title: "已复制ID", icon: "none" }),
+  });
+};
+
 const handleSubmit = async () => {
   if (!formData.value.nickName.trim()) {
-    uni.showToast({
-      title: "请输入昵称",
-      icon: "none",
-    });
+    uni.showToast({ title: "请输入昵称", icon: "none" });
     return;
   }
-
   try {
     isSubmitting.value = true;
-
-    // 调用更新接口
     await authApi.apiUpdateUserInfo({
       nickName: formData.value.nickName,
       avatarUrl: formData.value.avatarUrl,
     });
-
-    // 更新本地状态
     const user = getUserInfo();
     if (user) {
       setUserInfo({
@@ -230,21 +162,10 @@ const handleSubmit = async () => {
         avatarUrl: formData.value.avatarUrl,
       });
     }
-
-    uni.showToast({
-      title: "保存成功",
-      icon: "success",
-    });
-
-    setTimeout(() => {
-      uni.navigateBack();
-    }, 1000);
+    uni.showToast({ title: "保存成功", icon: "success" });
+    setTimeout(() => uni.navigateBack(), 1000);
   } catch (error: any) {
-    console.error("[Profile] 保存失败:", error);
-    uni.showToast({
-      title: error.message || "保存失败",
-      icon: "none",
-    });
+    uni.showToast({ title: error.message || "失败", icon: "none" });
   } finally {
     isSubmitting.value = false;
   }
@@ -252,99 +173,134 @@ const handleSubmit = async () => {
 </script>
 
 <style lang="scss" scoped>
-.profile-page {
+@import "@/styles/colors.scss";
+
+.profile-container {
   min-height: 100vh;
-  background: #f5f5f5;
-  padding-bottom: 100rpx;
+  background: $color-bg-secondary;
 }
 
-.avatar-section {
+.profile-scroll {
+  height: calc(100vh - 160rpx);
+}
+
+.profile-content {
+  padding: 48rpx 32rpx;
+}
+
+.avatar-hero-card {
+  background: #fff;
+  border-radius: $radius-lg;
+  padding: 60rpx 40rpx;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 24rpx;
-  padding: 20rpx 0;
-  width: 100%;
+  margin-bottom: 40rpx;
 
-  button {
-    padding: 0;
-    margin: 0;
+  .avatar-trigger {
+    position: relative;
+    width: 200rpx;
+    height: 200rpx;
+    margin-bottom: 24rpx;
     background: transparent;
-    border: none;
-    line-height: 1;
-
+    padding: 0;
+    line-height: normal;
     &::after {
       border: none;
     }
+
+    .avatar-img {
+      width: 100%;
+      height: 100%;
+      border-radius: 50%;
+      border: 6rpx solid $color-primary-lighter;
+    }
+    .camera-fab {
+      position: absolute;
+      bottom: 0;
+      right: 0;
+      width: 64rpx;
+      height: 64rpx;
+      background: $color-primary;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: 4rpx solid #fff;
+      box-shadow: 0 4rpx 12rpx rgba(123, 211, 162, 0.3);
+    }
+  }
+  .upload-hint {
+    font-size: 24rpx;
+    font-weight: 600;
+    color: $color-text-tertiary;
   }
 }
 
-.avatar-section-button {
-  width: 160rpx;
-  height: 160rpx;
-  border-radius: 50%;
+.form-card {
+  background: #fff;
+  border-radius: $radius-lg;
+  padding: 8rpx 40rpx;
 }
 
-.avatar-preview {
-  width: 160rpx;
-  height: 160rpx;
-  border-radius: 50%;
-  border: 4rpx solid #e0e0e0;
-  object-fit: cover;
-}
-
-.avatar-actions {
+.form-item-premium {
+  padding: 40rpx 0;
   display: flex;
-  flex-direction: column;
-  gap: 12rpx;
-  width: 100%;
+  justify-content: space-between;
+  align-items: center;
+
+  .l {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 8rpx;
+    .label {
+      font-size: 22rpx;
+      font-weight: 800;
+      color: $color-text-tertiary;
+      text-transform: uppercase;
+    }
+    .nickname-input {
+      font-size: 32rpx;
+      font-weight: 700;
+      color: $color-text-primary;
+    }
+    .val-txt {
+      font-size: 28rpx;
+      font-weight: 600;
+      color: $color-text-secondary;
+      font-family: monospace;
+    }
+  }
+
+  &.readonly {
+    opacity: 0.8;
+  }
 }
 
-.avatar-btn {
-  background: linear-gradient(135deg, #667eea, #764ba2);
-  color: white;
-  border: none;
-  border-radius: 8rpx;
-  padding: 12rpx 24rpx;
-  font-size: 28rpx;
+.form-divider {
+  height: 1rpx;
+  background: $color-divider;
+}
+
+.info-guide {
+  margin-top: 32rpx;
   display: flex;
   align-items: center;
-  justify-content: center;
-  gap: 8rpx;
-  line-height: 1.5;
+  gap: 12rpx;
+  padding: 0 12rpx;
+  color: $color-text-tertiary;
+  font-size: 22rpx;
+  font-weight: 500;
 }
 
-.avatar-btn::after {
-  border: none;
-}
-
-.nickname-section {
-  width: 100%;
-}
-
-.nickname-input {
-  width: 100%;
-  height: 48rpx;
-  padding: 12rpx;
-  font-size: 28rpx;
-  border: none;
-  border-radius: 8rpx;
-  box-sizing: border-box;
-}
-
-.user-id {
-  font-size: 24rpx;
-  color: #999;
-}
-
-.footer {
+.safe-bottom-dock {
   position: fixed;
   bottom: 0;
   left: 0;
   right: 0;
-  padding: 24rpx;
-  background: white;
-  box-shadow: 0 -2rpx 8rpx rgba(0, 0, 0, 0.1);
-  z-index: 10;
+  padding: 40rpx 48rpx calc(40rpx + env(safe-area-inset-bottom));
+  background: linear-gradient(180deg, transparent 0%, #fff 40%);
+  z-index: 100;
 }
 </style>

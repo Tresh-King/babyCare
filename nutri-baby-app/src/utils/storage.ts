@@ -115,16 +115,20 @@ export function getStorageInfo() {
 }
 
 /**
- * 清理已废弃的家庭相关数据 (用于迁移到去家庭化架构)
+ * 清理已废弃的旧版数据
  */
-export function clearDeprecatedFamilyData(): void {
+export function clearDeprecatedData(): void {
   try {
-    removeStorage(StorageKeys.FAMILY_LIST);
-    removeStorage(StorageKeys.CURRENT_FAMILY_ID);
-    removeStorage(StorageKeys.FAMILY_MEMBERS);
-    removeStorage(StorageKeys.INVITATIONS);
-    console.log("Deprecated family data cleared");
+    // 之前家庭架构废弃的键名，如果需要可以显式列出
+    const deprecatedKeys = [
+      `${STORAGE_PREFIX}family_list`,
+      `${STORAGE_PREFIX}current_family_id`,
+      `${STORAGE_PREFIX}family_members`,
+      `${STORAGE_PREFIX}invitations`,
+    ];
+    deprecatedKeys.forEach((key) => uni.removeStorageSync(key));
+    console.log("Deprecated storage data cleared");
   } catch (e) {
-    console.error("clearDeprecatedFamilyData error:", e);
+    console.error("clearDeprecatedData error:", e);
   }
 }

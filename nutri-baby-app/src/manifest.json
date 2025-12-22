@@ -1,28 +1,28 @@
 {
-    "name" : "宝宝喂养日志",
-    "appid" : "__UNI__0BCDDA9",
-    "description" : "记录宝宝喂养、睡眠、成长的智能育儿助手",
-    "versionName" : "3.3.0",
-    "versionCode" : "330",
-    "transformPx" : false,
+    "name": "宝宝喂养时刻",
+    "appid": "__UNI__0BCDDA9",
+    "description": "记录宝宝喂养、睡眠、成长的智能育儿助手",
+    "versionName": "3.3.0",
+    "versionCode": "330",
+    "transformPx": false,
     /* 5+App特有相关 */
-    "app-plus" : {
-        "usingComponents" : true,
-        "nvueStyleCompiler" : "uni-app",
-        "compilerVersion" : 3,
-        "splashscreen" : {
-            "alwaysShowBeforeRender" : true,
-            "waiting" : true,
-            "autoclose" : true,
-            "delay" : 0
+    "app-plus": {
+        "usingComponents": true,
+        "nvueStyleCompiler": "uni-app",
+        "compilerVersion": 3,
+        "splashscreen": {
+            "alwaysShowBeforeRender": true,
+            "waiting": true,
+            "autoclose": true,
+            "delay": 0
         },
         /* 模块配置 */
-        "modules" : {},
+        "modules": {},
         /* 应用发布信息 */
-        "distribute" : {
+        "distribute": {
             /* android打包配置 */
-            "android" : {
-                "permissions" : [
+            "android": {
+                "permissions": [
                     "<uses-permission android:name=\"android.permission.CHANGE_NETWORK_STATE\"/>",
                     "<uses-permission android:name=\"android.permission.MOUNT_UNMOUNT_FILESYSTEMS\"/>",
                     "<uses-permission android:name=\"android.permission.VIBRATE\"/>",
@@ -41,32 +41,32 @@
                 ]
             },
             /* ios打包配置 */
-            "ios" : {},
+            "ios": {},
             /* SDK配置 */
-            "sdkConfigs" : {}
+            "sdkConfigs": {}
         }
     },
     /* 快应用特有相关 */
-    "quickapp" : {},
+    "quickapp": {},
     /* 小程序特有相关 */
-    "mp-weixin" : {
-        "appid" : "wxf47340979046b474",
-        "setting" : {
-            "urlCheck" : false
+    "mp-weixin": {
+        "appid": "wx76ca5ae91b632085",
+        "setting": {
+            "urlCheck": false
         },
-        "usingComponents" : true
+        "usingComponents": true
     },
-    "mp-alipay" : {
-        "usingComponents" : true
+    "mp-alipay": {
+        "usingComponents": true
     },
-    "mp-baidu" : {
-        "usingComponents" : true
+    "mp-baidu": {
+        "usingComponents": true
     },
-    "mp-toutiao" : {
-        "usingComponents" : true
+    "mp-toutiao": {
+        "usingComponents": true
     },
-    "uniStatistics" : {
-        "enable" : false
+    "uniStatistics": {
+        "enable": false
     },
-    "vueVersion" : "3"
+    "vueVersion": "3"
 }

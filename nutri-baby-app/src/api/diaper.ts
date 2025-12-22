@@ -2,7 +2,7 @@
  * 换尿布记录 API 接口
  * 职责: 纯 API 调用,无状态,无副作用
  */
-import { get, post, put, del } from '@/utils/request'
+import { get, post, put, del } from "@/utils/request";
 
 // ============ 类型定义 ============
 
@@ -10,39 +10,39 @@ import { get, post, put, del } from '@/utils/request'
  * API 响应: 换尿布记录详情
  */
 export interface DiaperRecordResponse {
-  recordId: string
-  babyId: string
-  diaperType: 'pee' | 'poop' | 'both'
-  pooColor?: string
-  pooTexture?: string
-  note?: string
-  changeTime: number
-  createBy: string
-  createTime: number
+  recordId: string;
+  babyId: string;
+  diaperType: "pee" | "poop" | "both";
+  pooColor?: string;
+  pooTexture?: string;
+  note?: string;
+  changeTime: number;
+  createBy: string;
+  createTime: number;
 }
 
 /**
  * API 响应: 换尿布记录列表
  */
 export interface DiaperRecordsListResponse {
-  records: DiaperRecordResponse[]
-  total: number
-  page: number
-  pageSize: number
+  records: DiaperRecordResponse[];
+  total: number;
+  page: number;
+  pageSize: number;
 }
 
-type DiaperType = 'pee' | 'poop' | 'both'
+type DiaperType = "pee" | "poop" | "both";
 
 /**
  * API 请求: 创建换尿布记录
  */
 export interface CreateDiaperRecordRequest {
-  babyId: string
-  diaperType: DiaperType
-  pooColor?: string
-  pooTexture?: string
-  note?: string
-  changeTime: number
+  babyId: string;
+  diaperType: DiaperType;
+  pooColor?: string;
+  pooTexture?: string;
+  note?: string;
+  changeTime: number;
 }
 
 // ============ API 函数 ============
@@ -54,14 +54,17 @@ export interface CreateDiaperRecordRequest {
  * @returns Promise<DiaperRecordsListResponse>
  */
 export async function apiFetchDiaperRecords(params: {
-  babyId: string
-  startTime?: number
-  endTime?: number
-  page?: number
-  pageSize?: number
+  babyId: string;
+  startTime?: number;
+  endTime?: number;
+  page?: number;
+  pageSize?: number;
 }): Promise<DiaperRecordsListResponse> {
-  const response = await get<DiaperRecordsListResponse>('/diaper-records', params)
-  return response.data || { records: [], total: 0, page: 1, pageSize: 10 }
+  const response = await get<DiaperRecordsListResponse>(
+    "/diaper-records",
+    params,
+  );
+  return response.data || { records: [], total: 0, page: 1, pageSize: 10 };
 }
 
 /**
@@ -71,13 +74,13 @@ export async function apiFetchDiaperRecords(params: {
  * @returns Promise<DiaperRecordResponse>
  */
 export async function apiCreateDiaperRecord(
-  data: CreateDiaperRecordRequest
+  data: CreateDiaperRecordRequest,
 ): Promise<DiaperRecordResponse> {
-  const response = await post<DiaperRecordResponse>('/diaper-records', data)
+  const response = await post<DiaperRecordResponse>("/diaper-records", data);
   if (!response.data) {
-    throw new Error(response.message || '创建换尿布记录失败')
+    throw new Error(response.message || "创建换尿布记录失败");
   }
-  return response.data
+  return response.data;
 }
 
 /**
@@ -87,13 +90,15 @@ export async function apiCreateDiaperRecord(
  * @returns Promise<DiaperRecordResponse>
  */
 export async function apiGetDiaperRecordById(
-  recordId: string
+  recordId: string,
 ): Promise<DiaperRecordResponse> {
-  const response = await get<DiaperRecordResponse>(`/diaper-records/${recordId}`)
+  const response = await get<DiaperRecordResponse>(
+    `/diaper-records/${recordId}`,
+  );
   if (!response.data) {
-    throw new Error(response.message || '获取换尿布记录失败')
+    throw new Error(response.message || "获取换尿布记录失败");
   }
-  return response.data
+  return response.data;
 }
 
 /**
@@ -105,9 +110,9 @@ export async function apiGetDiaperRecordById(
  */
 export async function apiUpdateDiaperRecord(
   recordId: string,
-  data: Partial<CreateDiaperRecordRequest>
+  data: Partial<CreateDiaperRecordRequest>,
 ): Promise<void> {
-  await put(`/diaper-records/${recordId}`, data)
+  await put(`/diaper-records/${recordId}`, data);
 }
 
 /**
@@ -117,5 +122,5 @@ export async function apiUpdateDiaperRecord(
  * @returns Promise<void>
  */
 export async function apiDeleteDiaperRecord(recordId: string): Promise<void> {
-  await del(`/diaper-records/${recordId}`)
+  await del(`/diaper-records/${recordId}`);
 }

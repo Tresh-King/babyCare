@@ -12,10 +12,10 @@ import { get, post, put, del } from "@/utils/request";
 export interface SleepRecordResponse {
   recordId: string;
   babyId: string;
-  sleepType: "nap" | "night";  // 睡眠类型
+  sleepType: "nap" | "night"; // 睡眠类型
   startTime: number;
   endTime?: number;
-  duration?: number;  // 秒数
+  duration?: number; // 秒数
   note?: string;
   createBy: string;
   createTime: number;
@@ -49,17 +49,21 @@ export interface CreateSleepRecordRequest {
  * @param response API响应
  * @returns 前端SleepRecord
  */
-export function transformSleepRecordResponse(response: SleepRecordResponse): any {
+export function transformSleepRecordResponse(
+  response: SleepRecordResponse,
+): any {
   return {
     id: response.recordId,
     babyId: response.babyId,
     startTime: response.startTime,
     endTime: response.endTime,
-    duration: response.duration ? Math.round(response.duration / 60) : undefined, // 秒转分钟
+    duration: response.duration
+      ? Math.round(response.duration / 60)
+      : undefined, // 秒转分钟
     type: response.sleepType, // 直接使用sleepType字段
     createBy: response.createBy,
-    createByName: '',
-    createByAvatar: '',
+    createByName: "",
+    createByAvatar: "",
     createTime: response.createTime,
   };
 }

@@ -1,141 +1,137 @@
 <template>
-  <view class="timeline-page">
-    <!-- 固定顶部筛选条 -->
-    <view class="filter-fixed-top">
-      <!-- 记录类型筛选 -->
-      <wd-tabs v-model="recordTypeFilter" swipeable class="type-tabs">
+  <view class="timeline-container">
+    <!-- 顶部极简筛选 -->
+    <view class="filter-glass-dock">
+      <wd-tabs v-model="recordTypeFilter" swipeable class="premium-tabs">
         <wd-tab title="全部" name="all" />
         <wd-tab title="喂养" name="feeding" />
-        <wd-tab title="换尿布" name="diaper" />
         <wd-tab title="睡眠" name="sleep" />
+        <wd-tab title="尿布" name="diaper" />
         <wd-tab title="成长" name="growth" />
       </wd-tabs>
 
-      <!-- 日期筛选 -->
-      <!-- <view class="date-filter"> -->
-      <wd-radio-group
-        v-model="filterType"
-        inline
-        shape="button"
-        @change="handleDateFilterChange"
-      >
-        <wd-radio value="today">今天</wd-radio>
-        <wd-radio value="week">本周</wd-radio>
-        <wd-radio value="month">本月</wd-radio>
-        <wd-radio value="custom">自定义</wd-radio>
-      </wd-radio-group>
-      <wd-datetime-picker
-        id="custom-date-picker"
-        ref="dateTimePickerRef"
-        style="display: none"
-        v-model="selectedDateTimestamp"
-        @confirm="onDateConfirm"
-        :minDate="minDate"
-        :maxDate="maxDate"
-      >
-      </wd-datetime-picker>
-      <!-- </view> -->
+      <view class="date-quick-picker">
+        <text
+          v-for="opt in dateOptions"
+          :key="opt.value"
+          class="picker-btn"
+          :class="{ active: filterType === opt.value }"
+          @click="handleDateFilterChange({ value: opt.value })"
+          >{{ opt.label }}</text
+        >
+      </view>
     </view>
 
-    <!-- 内容区域 -->
-    <view class="timeline-list">
+    <!-- 主时间轴内容 -->
+    <scroll-view
+      class="timeline-scroll"
+      scroll-y
+      @scrolltolower="onReachBottom"
+    >
       <view v-if="isLoggedIn">
         <view v-if="groupedRecords.length === 0" class="empty-state">
           <wd-status-tip
-            :description="emptyDescription"
-            tip="当前时间段暂无数据"
+            image="content"
+            description="这里空空如也，快去记录宝宝的点滴吧"
           />
         </view>
 
-        <view v-else>
+        <view v-else class="timeline-list">
           <view
             v-for="group in groupedRecords"
             :key="group.date"
-            class="date-group"
-            :data-date="group.date"
+            class="date-section"
           >
-            <!-- 日期标题（浮动） -->
-            <view class="date-header">{{ group.dateText }}</view>
+            <!-- 粘性日期头 -->
+            <view class="date-sticky-header">
+              <view class="date-bubble">{{ group.dateText }}</view>
+            </view>
 
-            <!-- 记录列表 -->
-            <view
-              v-for="record in group.records"
-              :key="record.id"
-              class="record-item"
-              :class="`record-${record.type}`"
-            >
-              <!-- 时间轴圆点 -->
-              <view class="timeline-dot" :class="`dot-${record.type}`" />
-              <view class="timeline-line" />
+            <!-- 记录卡片流动 -->
+            <view class="records-flow">
+              <view
+                v-for="record in group.records"
+                :key="record.id"
+                class="timeline-block"
+                :class="`type-${record.type}`"
+              >
+                <!-- 轨道连接线 -->
+                <view class="track-line"></view>
+                <view class="track-dot"></view>
 
-              <!-- 记录内容 -->
-              <wd-card custom-class="record-card">
-                <template #title>
-                  <view class="record-header">
-                    <view class="record-type">
-                      <image :src="record.iconUrl" mode="aspectFill" class="type-icon" />
-                      <text class="type-name">{{ record.typeName }}</text>
+                <view class="record-content-card premium-shadow">
+                  <view class="card-main-row">
+                    <view class="type-badge" :class="record.type">
+                      <image
+                        :src="record.iconUrl"
+                        mode="aspectFit"
+                        class="icon"
+                      />
                     </view>
-                    <view class="record-meta">
-                      <text class="record-time">{{ record.timeText }}</text>
-                      <text class="record-creator">
-                        {{ record.createName }}
-                        <text v-if="record.relationship" class="relationship">({{ record.relationship }})</text>
-                      </text>
+                    <view class="info-body">
+                      <view class="top-row">
+                        <text class="type-name">{{ record.typeName }}</text>
+                        <text class="time-stamp">{{ record.timeText }}</text>
+                      </view>
+                      <text class="detail-text">{{ record.detail }}</text>
+                      <view v-if="record.originalRecord.note" class="note-box">
+                        <wd-icon name="edit-1" size="14" color="#94A3B8" />
+                        <text class="note-content">{{
+                          record.originalRecord.note
+                        }}</text>
+                      </view>
                     </view>
                   </view>
-                </template>
 
-                <!-- 详细信息显示 -->
-                <view class="record-details">
-                  <view class="detail-line">{{ record.detail }}</view>
-                  <!-- 备注信息 -->
-                  <view
-                    v-if="record.originalRecord.note"
-                    class="detail-line note"
-                  >
-                    <text class="label">备注:</text>
-                    <text class="value">{{ record.originalRecord.note }}</text>
+                  <view class="card-footer-actions">
+                    <view class="creator-info">
+                      <text class="name">{{ record.createName }}</text>
+                      <text v-if="record.relationship" class="rel"
+                        >({{ record.relationship }})</text
+                      >
+                    </view>
+                    <view class="btn-group">
+                      <view
+                        class="action-trigger edit"
+                        @click="editRecord(record)"
+                      >
+                        <wd-icon name="edit-1" size="16" />
+                      </view>
+                      <view
+                        class="action-trigger delete"
+                        @click="deleteRecord(record)"
+                      >
+                        <wd-icon name="delete" size="16" />
+                      </view>
+                    </view>
                   </view>
                 </view>
-
-                <template #footer>
-                  <view class="record-actions">
-                    <wd-button
-                      size="small"
-                      type="primary"
-                      @click="editRecord(record)"
-                    >
-                      编辑
-                    </wd-button>
-                    <wd-button
-                      size="small"
-                      type="info"
-                      @click="deleteRecord(record)"
-                    >
-                      删除
-                    </wd-button>
-                  </view>
-                </template>
-              </wd-card>
+              </view>
             </view>
           </view>
 
-          <!-- 加载更多组件 -->
-          <wd-loadmore
-            :state="loadMoreState"
-            @reload="loadMore"
-            loading-text="加载中..."
-            finished-text="没有更多了"
-            error-text="加载失败，点击重试"
-          />
+          <!-- 加载更多 -->
+          <view class="load-more-v2">
+            <wd-loadmore :state="loadMoreState" />
+          </view>
         </view>
       </view>
-      <view v-else>
-        <wd-status-tip description="请先登录" tip="登录后查看数据..." />
+      <view v-else class="auth-placeholder">
+        <wd-status-tip image="lock" description="请先登录以查看宝宝记录" />
+        <wd-button round type="primary" @click="goToLogin">跳转登录</wd-button>
       </view>
-    </view>
+    </scroll-view>
 
+    <!-- 自定义日期选择器 (隐藏触发) -->
+    <wd-datetime-picker
+      id="custom-date-picker"
+      ref="dateTimePickerRef"
+      v-model="selectedDateTimestamp"
+      :min-date="minDate"
+      :max-date="maxDate"
+      style="display: none"
+      @confirm="onDateConfirm"
+    />
   </view>
 </template>
 
@@ -165,9 +161,23 @@ const filterType = ref<"today" | "week" | "month" | "custom">("today");
 const customStartDate = ref(getTodayStart());
 const customEndDate = ref(Date.now());
 
+// 日期筛选选项
+const dateOptions = [
+  { label: "今天", value: "today" },
+  { label: "本周", value: "week" },
+  { label: "本月", value: "month" },
+  { label: "自定义", value: "custom" },
+] as const;
+
+const goToLogin = () => {
+  uni.navigateTo({
+    url: "/pages/user/login",
+  });
+};
+
 // 记录类型筛选
 const recordTypeFilter = ref<"all" | "feeding" | "diaper" | "sleep" | "growth">(
-  "all"
+  "all",
 );
 
 // Wot UI 日期选择器相关
@@ -183,19 +193,23 @@ const minDate = ref(Date.parse(currentBaby.value?.birthDate || ""));
 const maxDate = ref(Date.now());
 // 分页相关
 const currentPage = ref(1);
-const pageSize = ref(5);
+const pageSize = ref(10);
 const isLoadingMore = ref(false);
 const hasMore = ref(true);
-const handleDateFilterChange = ({ value }: { value: "today" | "week" | "month" | "custom" }) => {
-  // console.log("Date filter changed to:", value);
+
+const handleDateFilterChange = ({
+  value,
+}: {
+  value: "today" | "week" | "month" | "custom";
+}) => {
   if (value === "custom") {
-    // console.log("Opening custom date picker");
     dateTimePickerRef.value?.open();
   }
+  filterType.value = value;
   // 重置分页，重新加载数据
   currentPage.value = 1;
   hasMore.value = true;
-  loadRecords(true)
+  loadRecords(true);
 };
 
 // 展示用的记录接口
@@ -208,7 +222,7 @@ interface TimelineRecord {
   timeText: string;
   detail: string;
   originalRecord: any;
-  createName: string;   // 创建者昵称
+  createName: string; // 创建者昵称
   relationship: string; // 创建者与宝宝的关系
 }
 
@@ -257,7 +271,7 @@ const allRecords = computed<TimelineRecord[]>(() => {
     } else if (item.recordType === "diaper") {
       const record = item.detail as diaperApi.DiaperRecordResponse;
       iconUrl = "/static/baby_changing_station.svg";
-      typeName = "换尿布";
+      typeName = "尿布";
 
       if (record.diaperType === "pee") detail = "小便";
       else if (record.diaperType === "poop") detail = "大便";
@@ -294,12 +308,11 @@ const allRecords = computed<TimelineRecord[]>(() => {
       timeText: formatDate(item.eventTime, "HH:mm"),
       detail,
       originalRecord: item.detail,
-      createName: item.createName || '',
-      relationship: item.relationship || '',
+      createName: item.createName || "",
+      relationship: item.relationship || "",
     });
   });
 
-  // 后端已根据 recordType 筛选，前端直接返回
   return records;
 });
 
@@ -331,47 +344,15 @@ const groupedRecords = computed(() => {
   return groups;
 });
 
-// 获取记录类型的显示名称
-const getRecordTypeName = (type: string): string => {
-  const map: Record<string, string> = {
-    feeding: "喂养",
-    diaper: "换尿布",
-    sleep: "睡眠",
-    growth: "成长",
-  };
-  return map[type] || "记录";
-};
-
-// 空状态描述
-const emptyDescription = computed(() => {
-  if (!isLoggedIn.value) return "登录后查看记录";
-
-  if (timelineItems.value.length === 0) return "当前时间段暂无数据";
-
-  if (allRecords.value.length === 0 && recordTypeFilter.value !== "all") {
-    return `当前时间段暂无${getRecordTypeName(recordTypeFilter.value)}记录`;
-  }
-
-  return "暂无记录";
-});
-
-// 加载时间线记录 (使用新的聚合 API)
-const loadRecords = async (isRefresh: boolean = false, pullDown: boolean = false) => {
+// 加载时间线记录
+const loadRecords = async (
+  isRefresh: boolean = false,
+  pullDown: boolean = false,
+) => {
   if (!currentBaby.value) return;
+  if (isLoadingMore.value) return;
+  if (!isRefresh && !hasMore.value) return;
 
-  // 防止重复加载
-  if (isLoadingMore.value) {
-    // console.log("[Timeline] 正在加载中，跳过重复请求");
-    return;
-  }
-
-  // 如果不是刷新且没有更多数据，直接返回
-  if (!isRefresh && !hasMore.value) {
-    // console.log("[Timeline] 没有更多数据，跳过加载");
-    return;
-  }
-
-  // 如果是刷新，重置分页
   if (isRefresh) {
     currentPage.value = 1;
     timelineItems.value = [];
@@ -381,7 +362,6 @@ const loadRecords = async (isRefresh: boolean = false, pullDown: boolean = false
   const babyId = currentBaby.value.babyId;
   const pageToLoad = currentPage.value;
 
-  // 计算时间范围
   let startTime = 0;
   let endTime = Date.now();
 
@@ -398,140 +378,63 @@ const loadRecords = async (isRefresh: boolean = false, pullDown: boolean = false
 
   try {
     isLoadingMore.value = true;
-    
-    if (pullDown) {
-      uni.showNavigationBarLoading();
-    } else if (isRefresh) {
-      uni.showLoading({ title: "加载中", mask: false });
-    }
-    
+    if (pullDown) uni.showNavigationBarLoading();
+
     const response = await timelineApi.apiFetchTimeline({
       babyId,
       startTime,
       endTime,
-      recordType: recordTypeFilter.value === 'all' ? '' : recordTypeFilter.value,
+      recordType:
+        recordTypeFilter.value === "all" ? "" : recordTypeFilter.value,
       page: pageToLoad,
       pageSize: pageSize.value,
     });
 
     const newItems = response.data.items || [];
-    
-    // 如果是刷新，替换数据；否则追加数据
     if (isRefresh) {
       timelineItems.value = newItems;
     } else {
       timelineItems.value.push(...newItems);
     }
 
-    // 页码递增（无论是否有数据，都要递增以避免重复请求同一页）
     currentPage.value = pageToLoad + 1;
-
     totalRecords.value = response.data.total;
-
-    // 判断是否还有更多数据：返回的数据少于请求的 pageSize，说明已经没有更多了
     hasMore.value = newItems.length >= pageSize.value;
-
-    /* console.log("[Timeline] 加载数据完成", {
-      loadedPage: pageToLoad,
-      nextPage: currentPage.value,
-      newItemsCount: newItems.length,
-      totalLoaded: timelineItems.value.length,
-      total: response.data.total,
-      hasMore: hasMore.value,
-    }); */
-    
-    if (pullDown) {
-      uni.showToast({
-        title: "刷新成功",
-        icon: "success",
-        duration: 1200,
-      });
-    }
   } catch (error) {
-    console.error("加载时间线失败:", error);
-    if (pullDown) {
-      uni.showToast({
-        title: "刷新失败",
-        icon: "none",
-        duration: 1500,
-      });
-    } else {
-      uni.showToast({
-        title: "加载数据失败",
-        icon: "none",
-      });
-    }
+    console.error("加载失败:", error);
   } finally {
     if (pullDown) {
       uni.hideNavigationBarLoading();
       uni.stopPullDownRefresh();
-    } else if (isRefresh) {
-      uni.hideLoading();
     }
     isLoadingMore.value = false;
   }
 };
 
-// 页面加载
 onMounted(() => {
-  if (isLoggedIn.value) {
-    loadRecords(true);
-  }
+  if (isLoggedIn.value) loadRecords(true);
 });
 
-// 监听记录类型变化，重新加载数据
 watch(recordTypeFilter, () => {
-  currentPage.value = 1;
-  hasMore.value = true;
   loadRecords(true);
 });
 
-// 下拉刷新
-onPullDownRefresh(async () => {
-  if (!isLoggedIn.value || !currentBaby.value) {
-    uni.stopPullDownRefresh();
-    uni.hideNavigationBarLoading();
-    return;
-  }
-  await loadRecords(true, true);
+onPullDownRefresh(() => {
+  loadRecords(true, true);
 });
 
-// 页面滚动到底部时触发
-onReachBottom(() => {
-  /* console.log("[Timeline] onReachBottom 触发", {
-    hasMore: hasMore.value,
-    isLoadingMore: isLoadingMore.value,
-  }); */
-
-  // loadRecords 内部已经有防重复加载的逻辑
-  loadRecords(false);
-});
-
-// Wot UI 日期选择器的 confirm 事件处理
 const onDateConfirm = ({ value }: { value: number[] }) => {
-  // console.log("[Timeline] 选择的日期时间戳范围:", value);
-
-  if (!value || value.length === 0 || !value[0]) return;
-
-  // value 是时间戳数组
-  const timestamp = value[0];
-  const endTimestamp = value[1] || timestamp;
-  // 更新时间戳
-  selectedDateTimestamp.value = value;
-
-  // 设置当天的起止时间
+  if (!value || value.length === 0) return;
+  const timestamp = value?.[0] || Date.now();
+  const endTimestamp = value?.[1] || timestamp;
   customStartDate.value = new Date(timestamp).setHours(0, 0, 0, 0);
   customEndDate.value = new Date(endTimestamp).setHours(23, 59, 59, 999);
   filterType.value = "custom";
-
-  // 重新加载数据（从第一页开始）
   loadRecords(true);
 };
 
-// 编辑记录 - 跳转到对应的添加页面
 const editRecord = (record: TimelineRecord) => {
   let url = "";
-
   switch (record.type) {
     case "feeding":
       url = `/pages/record/feeding/feeding?editId=${record.id}`;
@@ -546,13 +449,9 @@ const editRecord = (record: TimelineRecord) => {
       url = `/pages/record/growth/growth?editId=${record.id}`;
       break;
   }
-
-  if (url) {
-    uni.navigateTo({ url });
-  }
+  if (url) uni.navigateTo({ url });
 };
 
-// 删除记录
 const deleteRecord = async (record: TimelineRecord) => {
   uni.showModal({
     title: "确认删除",
@@ -560,371 +459,289 @@ const deleteRecord = async (record: TimelineRecord) => {
     success: async (res) => {
       if (res.confirm) {
         try {
-          if (record.type === "feeding") {
+          if (record.type === "feeding")
             await feedingApi.apiDeleteFeedingRecord(record.id);
-          } else if (record.type === "diaper") {
+          else if (record.type === "diaper")
             await diaperApi.apiDeleteDiaperRecord(record.id);
-          } else if (record.type === "sleep") {
+          else if (record.type === "sleep")
             await sleepApi.apiDeleteSleepRecord(record.id);
-          }
-
-          uni.showToast({
-            title: "删除成功",
-            icon: "success",
-          });
-
-          // 重新加载记录
-          await loadRecords();
+          uni.showToast({ title: "删除成功", icon: "success" });
+          await loadRecords(true);
         } catch (error: any) {
-          uni.showToast({
-            title: error.message || "删除失败",
-            icon: "none",
-          });
+          uni.showToast({ title: error.message || "删除失败", icon: "none" });
         }
       }
     },
   });
 };
 
-// 加载更多状态计算（后端已处理类型筛选，直接使用 hasMore）
-const loadMoreState = computed<string>(() => {
+const loadMoreState = computed(() => {
   if (!isLoggedIn.value || !currentBaby.value) return "finished";
-
-  if (timelineItems.value.length === 0) return hasMore.value ? "loading" : "finished";
-
   if (isLoadingMore.value) return "loading";
-
-  if (!hasMore.value) return "finished";
-
-  return "loading";
+  return hasMore.value ? "loading" : "finished";
 });
-
-// 加载更多函数
-const loadMore = () => {
-  // console.log("[Timeline] 点击重试加载");
-  loadRecords(false);
-};
-
 </script>
 
 <style lang="scss" scoped>
-.timeline-page {
+@import "@/styles/colors.scss";
+
+.timeline-container {
   min-height: 100vh;
-  background: #f6f8f7;
+  background: $color-bg-secondary;
   display: flex;
   flex-direction: column;
 }
 
-// ========== 固定顶部筛选条 ==========
-.filter-fixed-top {
-  position: fixed;
+.filter-glass-dock {
+  position: sticky;
   top: 0;
-  left: 0;
-  right: 0;
   z-index: 100;
-  background: white;
-  box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.08);
-  overflow-x: hidden;
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(12px);
+  padding-bottom: 12rpx;
+  border-bottom: 1rpx solid rgba(123, 211, 162, 0.1);
 }
 
-.type-tabs {
-  background: white;
-  border-bottom: 1rpx solid #e8eef5;
+.premium-tabs {
+  --wd-tabs-nav-bg: transparent;
+  --wd-tabs-line-color: #7bd3a2;
 }
 
-:deep(.wd-tabs) {
-  .wd-tab__item {
-    font-size: 30rpx;
-    font-weight: 500;
-    padding: 26rpx 0;
-    transition: all 0.3s ease;
-  }
-
-  .wd-tab__item--active {
-    font-weight: 600;
-    color: #7dd3a2;
-    transform: scale(1.05);
-  }
-
-  .wd-tabs__line {
-    height: 6rpx;
-    border-radius: 3rpx;
-    background: linear-gradient(90deg, #7dd3a2, #52c41a);
-  }
-}
-
-.date-filter {
-  background: #f6f8f7;
+.date-quick-picker {
   display: flex;
-  align-items: center;
-  gap: 12rpx;
-  border-bottom: 1rpx solid #ebebeb;
-  min-height: 60rpx;
+  gap: 16rpx;
+  padding: 8rpx 32rpx;
+
+  .picker-btn {
+    font-size: 24rpx;
+    color: $color-text-tertiary;
+    padding: 8rpx 24rpx;
+    background: #fff;
+    border-radius: 100rpx;
+    border: 1px solid $color-border-light;
+
+    &.active {
+      background: $color-primary;
+      color: #fff;
+      border-color: $color-primary;
+      box-shadow: 0 4rpx 12rpx rgba(123, 211, 162, 0.3);
+    }
+  }
 }
 
-.quick-filters {
-  display: flex;
-  gap: 12rpx;
+.timeline-scroll {
   flex: 1;
-  align-items: center;
-  justify-content: flex-end;
+  height: 0;
 }
 
-// 按钮样式优化
-:deep(.wd-button) {
-  transition: all 0.25s ease;
-}
-
-:deep(.wd-button--small) {
-  font-size: 26rpx;
-  padding: 0 24rpx;
-  height: 60rpx;
-  border-radius: 30rpx;
-}
-
-:deep(.wd-button--default) {
-  background: white;
-  color: #666;
-  border-color: #e0e0e0;
-}
-
-:deep(.wd-button--default:active) {
-  background: #f6f8f7;
-}
-
-:deep(.wd-button--primary:not(.wd-button--plain)) {
-  box-shadow: 0 4rpx 12rpx rgba(125, 211, 162, 0.25);
-  transform: translateY(-2rpx);
-}
-
-:deep(.wd-button--plain) {
-  background: white;
-}
-
-// ========== 内容区域 ==========
 .timeline-list {
-  padding: 20rpx;
-  padding-top: 180rpx; // 为固定的顶部预留空间
-  padding-bottom: 40rpx;
-  min-height: 100vh;
+  padding: 32rpx;
 }
 
-.empty-state {
-  padding: 120rpx 0;
-}
-
-.date-group {
+.date-section {
   margin-bottom: 40rpx;
-  animation: fadeIn 0.3s ease;
 }
 
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(10rpx);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
+.date-sticky-header {
+  position: sticky;
+  top: 140rpx;
+  z-index: 10;
+  display: flex;
+  justify-content: center;
+  margin-bottom: 32rpx;
+
+  .date-bubble {
+    background: $color-primary-lighter;
+    color: $color-primary-dark;
+    font-size: 22rpx;
+    font-weight: 700;
+    padding: 8rpx 32rpx;
+    border-radius: 100rpx;
+    border: 1px solid rgba(123, 211, 162, 0.2);
   }
 }
 
-.date-header {
-  width: 100%;
-  font-size: 28rpx;
-  font-weight: 600;
-  color: #333;
-  padding: 20rpx 0;
-  padding-left: 16rpx;
-  background: linear-gradient(to bottom, #f6f8f7 85%, transparent);
-  z-index: 5;
+.records-flow {
+  display: flex;
+  flex-direction: column;
+}
 
-  &::before {
-    content: "";
+.timeline-block {
+  position: relative;
+  padding-left: 48rpx;
+  margin-bottom: 24rpx;
+
+  .track-line {
+    position: absolute;
+    left: 10rpx;
+    top: 32rpx;
+    bottom: -32rpx;
+    width: 4rpx;
+    background: rgba(123, 211, 162, 0.1);
+  }
+
+  .track-dot {
     position: absolute;
     left: 0;
-    top: 50%;
-    transform: translateY(-50%);
-    width: 6rpx;
-    height: 28rpx;
-    background: linear-gradient(180deg, #7dd3a2, #52c41a);
-    border-radius: 3rpx;
+    top: 32rpx;
+    width: 24rpx;
+    height: 24rpx;
+    background: #fff;
+    border: 5rpx solid $color-primary;
+    border-radius: 50%;
+    z-index: 2;
+    box-shadow: 0 0 0 8rpx rgba(123, 211, 162, 0.1);
+  }
+
+  &.type-sleep .track-dot {
+    border-color: #8cc7ff;
+    box-shadow: 0 0 0 8rpx rgba(140, 199, 255, 0.1);
+  }
+  &.type-diaper .track-dot {
+    border-color: #ffd166;
+    box-shadow: 0 0 0 8rpx rgba(255, 209, 102, 0.1);
+  }
+  &.type-growth .track-dot {
+    border-color: #b29cef;
+    box-shadow: 0 0 0 8rpx rgba(178, 156, 239, 0.1);
   }
 }
 
-.record-item {
-  position: relative;
-  padding-left: 60rpx;
-  margin-bottom: 20rpx;
-  animation: slideIn 0.3s ease;
-
-  &:last-child .timeline-line {
-    display: none;
-  }
+.record-content-card {
+  background: #fff;
+  border-radius: $radius-md;
+  padding: $spacing-md;
+  border: 1px solid $color-border-light;
 }
 
-@keyframes slideIn {
-  from {
-    opacity: 0;
-    transform: translateX(-20rpx);
-  }
-  to {
-    opacity: 1;
-    transform: translateX(0);
-  }
-}
-
-.timeline-dot {
-  position: absolute;
-  left: 10rpx;
-  top: 8rpx;
-  width: 24rpx;
-  height: 24rpx;
-  border-radius: 50%;
-  border: 4rpx solid;
-  background: white;
-  z-index: 2;
-  box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.1);
-
-  &.dot-feeding {
-    border-color: #7dd3a2;
-  }
-
-  &.dot-diaper {
-    border-color: #52c41a;
-  }
-
-  &.dot-sleep {
-    border-color: #1890ff;
-  }
-
-  &.dot-growth {
-    border-color: #722ed1;
-  }
-}
-
-.timeline-line {
-  position: absolute;
-  left: 18rpx;
-  top: 32rpx;
-  bottom: -20rpx;
-  width: 2rpx;
-  background: #e8e8e8;
-  z-index: 1;
-}
-
-// WotUI Card 组件自定义样式
-:deep(.record-card) {
-  border-radius: 12rpx;
-  box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.04);
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
-
-  &:active {
-    transform: scale(0.98);
-    box-shadow: 0 1rpx 4rpx rgba(0, 0, 0, 0.06);
-  }
-}
-
-.record-header {
+.card-main-row {
   display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  width: 100%;
+  gap: 24rpx;
+  margin-bottom: 16rpx;
 }
 
-.record-type {
+.type-badge {
+  width: 80rpx;
+  height: 80rpx;
+  border-radius: $radius-sm;
   display: flex;
   align-items: center;
-  gap: 12rpx;
+  justify-content: center;
+  flex-shrink: 0;
+
+  .icon {
+    width: 44rpx;
+    height: 44rpx;
+  }
+
+  &.feeding {
+    background: #e9f7f0;
+  }
+  &.sleep {
+    background: #ebf4ff;
+  }
+  &.diaper {
+    background: #fff4e6;
+  }
+  &.growth {
+    background: #f3eeff;
+  }
 }
 
-.record-meta {
+.info-body {
+  flex: 1;
   display: flex;
   flex-direction: column;
-  align-items: flex-end;
-  gap: 4rpx;
 }
 
-.type-icon {
-  width: 32rpx;
-  height: 32rpx;
+.top-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8rpx;
 }
 
 .type-name {
   font-size: 28rpx;
-  font-weight: bold;
-  color: #1a1a1a;
+  font-weight: 700;
+  color: $color-text-primary;
 }
 
-.record-time {
-  font-size: 24rpx;
-  color: #999;
-}
-
-.record-creator {
+.time-stamp {
   font-size: 22rpx;
-  color: #666;
+  color: $color-text-tertiary;
+}
+
+.detail-text {
+  font-size: 26rpx;
+  color: $color-text-secondary;
+}
+
+.note-box {
+  margin-top: 12rpx;
+  background: $color-bg-secondary;
+  padding: 8rpx 16rpx;
+  border-radius: $radius-xs;
   display: flex;
   align-items: center;
+  gap: 8rpx;
+}
+
+.note-content {
+  font-size: 22rpx;
+  color: $color-text-tertiary;
+}
+
+.card-footer-actions {
+  padding-top: 16rpx;
+  border-top: 1rpx solid $color-divider;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.creator-info {
+  display: flex;
+  align-items: baseline;
   gap: 4rpx;
 }
 
-.relationship {
-  color: #7dd3a2;
-  font-weight: 500;
+.creator-info .name {
+  font-size: 22rpx;
+  color: $color-text-tertiary;
+}
+.creator-info .rel {
+  font-size: 20rpx;
+  color: $color-text-tertiary;
 }
 
-.record-details {
-  margin-top: 16rpx;
-}
-
-.detail-line {
-  font-size: 26rpx;
-  color: #666;
-  line-height: 1.6;
-  margin-bottom: 8rpx;
-
-  &.note {
-    background: #f6f8f7;
-    padding: 12rpx 16rpx;
-    border-radius: 8rpx;
-    margin-top: 12rpx;
-
-    .label {
-      color: #999;
-      margin-right: 8rpx;
-    }
-
-    .value {
-      color: #333;
-    }
-  }
-}
-
-.record-actions {
+.btn-group {
   display: flex;
-  justify-content: flex-end;
-  gap: 12rpx;
-  margin-top: 16rpx;
+  gap: 20rpx;
 }
 
-:deep(.wd-tabs) {
-  width: 100% !important;
-  height: 80rpx !important;
+.action-trigger {
+  width: 56rpx;
+  height: 56rpx;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: $color-bg-tertiary;
 }
-:deep(.wd-datetime-picker .wd-cell) {
-  display: none !important;
+
+.action-trigger.edit {
+  color: $color-primary;
 }
-:deep(.wd-radio-group) {
-  border-top: 1rpx solid #e8eef5 !important;
-  padding: 18rpx 20rpx !important;
+.action-trigger.delete {
+  color: $color-danger;
 }
-:deep(.wd-radio.is-button .wd-radio__label) {
-  font-size: 22rpx !important;
-  min-width: 0 !important;
-  padding: 0 12rpx !important;
-  width: 100rpx !important;
-  height: 42rpx !important;
-  line-height: 42rpx;
+
+.auth-placeholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 120rpx 64rpx;
+  gap: 40rpx;
 }
 </style>

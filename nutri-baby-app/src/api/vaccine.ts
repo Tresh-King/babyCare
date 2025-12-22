@@ -381,11 +381,18 @@ export async function apiFetchVaccineSchedules(
   statistics?: any;
 }> {
   // 过滤掉 undefined 的参数
-  const queryParams = params ? Object.fromEntries(
-    Object.entries(params).filter(([_, v]) => v !== undefined)
-  ) : {};
+  const queryParams = params
+    ? Object.fromEntries(
+        Object.entries(params).filter(([_, v]) => v !== undefined),
+      )
+    : {};
 
-  console.log("apiFetchVaccineSchedules 调用，babyId:", babyId, "queryParams:", queryParams);
+  console.log(
+    "apiFetchVaccineSchedules 调用，babyId:",
+    babyId,
+    "queryParams:",
+    queryParams,
+  );
 
   const response = await get<any>(
     `/babies/${babyId}/vaccine-schedules`,

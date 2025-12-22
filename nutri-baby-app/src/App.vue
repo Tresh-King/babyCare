@@ -59,7 +59,7 @@ function handleQRCodeScan(options: any) {
       } else {
         console.error(
           "[App] Failed to parse short code from scene:",
-          sceneParam
+          sceneParam,
         );
         uni.showToast({
           title: "二维码格式错误",

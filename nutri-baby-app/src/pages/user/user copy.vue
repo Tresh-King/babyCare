@@ -118,21 +118,13 @@
           is-link
           @click="goToSubscribeSettings"
         >
-
           <template #icon>
             <wd-icon name="notification" size="20px" custom-class="cell-icon" />
           </template>
         </wd-cell>
         <!-- #ifdef MP-WEIXIN -->
-        <button
-          open-type="feedback"
-          class="feedback-button"
-        >
-          <wd-cell
-            title="用户反馈"
-            desc="向我们反馈问题和建议"
-            is-link
-          >
+        <button open-type="feedback" class="feedback-button">
+          <wd-cell title="用户反馈" desc="向我们反馈问题和建议" is-link>
             <template #icon>
               <wd-icon name="chat" size="20px" custom-class="cell-icon" />
             </template>
@@ -332,7 +324,7 @@ const exportData = async () => {
     const jsonStr = JSON.stringify(exportData, null, 2);
     const fileName = `baby_data_${formatDate(
       Date.now(),
-      "YYYYMMDD_HHmmss"
+      "YYYYMMDD_HHmmss",
     )}.json`;
 
     uni.hideLoading();

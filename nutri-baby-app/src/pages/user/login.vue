@@ -1,7 +1,11 @@
 <template>
   <view class="login-container">
     <!-- 背景图片 -->
-    <image class="login-bg-image" src="/static/login-background.png" mode="aspectFill" />
+    <image
+      class="login-bg-image"
+      src="/static/login-background.png"
+      mode="aspectFill"
+    />
 
     <view class="login-content">
       <!-- Logo 和标题 -->
@@ -27,7 +31,9 @@
             </view>
             <view class="checkbox-label">
               我已阅读并同意
-              <text class="link" @click.stop="showPrivacy = true">《隐私政策》</text>
+              <text class="link" @click.stop="showPrivacy = true"
+                >《隐私政策》</text
+              >
             </view>
           </view>
         </view>
@@ -38,9 +44,9 @@
           block
           :loading="loading"
           :disabled="!agreePrivacy || loading"
-          @click="handleLogin"
           class="login-btn"
           :class="{ 'login-btn-disabled': !agreePrivacy }"
+          @click="handleLogin"
         >
           <text v-if="!loading">微信一键登录</text>
           <text v-else>登录中...</text>
@@ -53,7 +59,9 @@
         <view class="privacy-modal-content">
           <view class="privacy-modal-header">
             <text class="privacy-modal-title">隐私政策</text>
-            <text class="privacy-modal-close" @click="showPrivacy = false">×</text>
+            <text class="privacy-modal-close" @click="showPrivacy = false"
+              >×</text
+            >
           </view>
           <scroll-view class="privacy-modal-body" scroll-y="true">
             <view class="privacy-text">
@@ -61,15 +69,17 @@
               <text class="privacy-section-content">
                 宝宝喂养时刻应用会收集您和宝宝的以下信息用于提供服务：
               </text>
-              <text class="privacy-item">• 微信账号信息（昵称、头像、OpenID）</text>
-              <text class="privacy-item">• 宝宝基本信息（姓名、性别、出生日期）</text>
+              <text class="privacy-item"
+                >• 微信账号信息（昵称、头像、OpenID）</text
+              >
+              <text class="privacy-item"
+                >• 宝宝基本信息（姓名、性别、出生日期）</text
+              >
               <text class="privacy-item">• 喂养、睡眠、成长等育儿记录</text>
               <text class="privacy-item">• 协作者信息（用于共同管理）</text>
 
               <text class="privacy-section-title">2. 信息使用范围</text>
-              <text class="privacy-section-content">
-                收集的信息仅用于：
-              </text>
+              <text class="privacy-section-content"> 收集的信息仅用于： </text>
               <text class="privacy-item">• 提供育儿记录和数据统计功能</text>
               <text class="privacy-item">• 发送喂养提醒和疫苗提醒通知</text>
               <text class="privacy-item">• 改进应用功能和用户体验</text>
@@ -89,12 +99,12 @@
               </text>
               <text class="privacy-item">• 获得您的明确同意</text>
               <text class="privacy-item">• 法律或监管要求</text>
-              <text class="privacy-item">• 微信官方平台需要（仅用于账号认证）</text>
+              <text class="privacy-item"
+                >• 微信官方平台需要（仅用于账号认证）</text
+              >
 
               <text class="privacy-section-title">5. 您的权利</text>
-              <text class="privacy-section-content">
-                您有权：
-              </text>
+              <text class="privacy-section-content"> 您有权： </text>
               <text class="privacy-item">• 访问您的个人信息</text>
               <text class="privacy-item">• 更正或删除您的信息</text>
               <text class="privacy-item">• 撤销授权和同意</text>
@@ -130,14 +140,13 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
-import { wxLogin, isLoggedIn } from '@/store/user'
-import { StorageKeys } from '@/utils/storage'
+import { ref, onMounted } from "vue";
+import { wxLogin, isLoggedIn } from "@/store/user";
+import { StorageKeys } from "@/utils/storage";
 
-const loading = ref(false)
-const agreePrivacy = ref(false)
-const showPrivacy = ref(false)
-
+const loading = ref(false);
+const agreePrivacy = ref(false);
+const showPrivacy = ref(false);
 
 /**
  * 登录后重定向逻辑
@@ -151,64 +160,63 @@ const showPrivacy = ref(false)
  * 2. 设置延迟确保登录状态完全保存
  */
 const redirectAfterLogin = () => {
-  console.log('[Login] 登录成功,检查重定向目标')
+  console.log("[Login] 登录成功,检查重定向目标");
 
   // 检查是否有待处理的邀请码（从扫码进入但未登录的场景）
-  const pendingCode = uni.getStorageSync(StorageKeys.PENDING_INVITE_CODE)
-  console.log('[Login] Checking PENDING_INVITE_CODE:', pendingCode)
+  const pendingCode = uni.getStorageSync(StorageKeys.PENDING_INVITE_CODE);
+  console.log("[Login] Checking PENDING_INVITE_CODE:", pendingCode);
 
   if (pendingCode) {
-    console.log('[Login] 检测到待处理的邀请码,跳转到加入页面:', pendingCode)
+    console.log("[Login] 检测到待处理的邀请码,跳转到加入页面:", pendingCode);
 
     // 清除缓存（避免重复跳转）
-    uni.removeStorageSync(StorageKeys.PENDING_INVITE_CODE)
+    uni.removeStorageSync(StorageKeys.PENDING_INVITE_CODE);
 
     // 跳转回加入页面
     uni.reLaunch({
       url: `/pages/baby/join/join?code=${pendingCode}`,
-    })
+    });
 
-    return
+    return;
   }
 
   // 正常跳转到首页
-  console.log('[Login] 登录成功,跳转到首页')
+  console.log("[Login] 登录成功,跳转到首页");
 
   // 对于 tabBar 页面,应该使用 switchTab 而不是 reLaunch
   // 这样可以避免页面重新加载和生命周期冲突
   uni.switchTab({
-    url: '/pages/index/index',
+    url: "/pages/index/index",
     fail: (err) => {
-      console.error('[Login] 跳转失败,使用 reLaunch 降级:', err)
+      console.error("[Login] 跳转失败,使用 reLaunch 降级:", err);
       // 如果 switchTab 失败,降级使用 reLaunch
       uni.reLaunch({
-        url: '/pages/index/index'
-      })
-    }
-  })
-}
+        url: "/pages/index/index",
+      });
+    },
+  });
+};
 
 // 处理登录 - 必须在用户点击事件中调用
 const handleLogin = async () => {
-  if (loading.value) return
+  if (loading.value) return;
 
-  loading.value = true
+  loading.value = true;
 
   try {
     // 微信登录
-    await wxLogin()
+    await wxLogin();
 
     // 延迟跳转,让用户看到成功提示
     setTimeout(() => {
-      redirectAfterLogin()
-    }, 1500)
-
+      redirectAfterLogin();
+    }, 1500);
   } catch (error) {
-    console.error('登录失败:', error)
+    console.error("登录失败:", error);
   } finally {
-    loading.value = false
+    loading.value = false;
   }
-}
+};
 </script>
 
 <style lang="scss" scoped>

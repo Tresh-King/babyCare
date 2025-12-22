@@ -34,7 +34,8 @@ function initializeIfNeeded() {
 // 当前宝宝信息
 const currentBaby = computed(() => {
   initializeIfNeeded(); // 确保数据已加载
-  const baby = babyList.value.find((baby) => baby.babyId === currentBabyId.value) || null;
+  const baby =
+    babyList.value.find((baby) => baby.babyId === currentBabyId.value) || null;
   return baby;
 });
 
@@ -108,8 +109,10 @@ export async function fetchBabyList(): Promise<BabyProfile[]> {
 
     if (babies.length > 0) {
       // 检查当前选中的宝宝是否仍在列表中
-      const currentBabyStillExists = currentBabyId.value && babies.some((b) => b.babyId === currentBabyId.value);
-      
+      const currentBabyStillExists =
+        currentBabyId.value &&
+        babies.some((b) => b.babyId === currentBabyId.value);
+
       if (!currentBabyStillExists) {
         // 当前宝宝不存在，需要重新选择
         if (defaultBabyId && babies.some((b) => b.babyId === defaultBabyId)) {
@@ -227,7 +230,7 @@ export function clearBabyData() {
  */
 export function setCollaborators(
   babyId: string,
-  collaborators: BabyCollaborator[]
+  collaborators: BabyCollaborator[],
 ): void {
   collaboratorsMap.value.set(babyId, collaborators);
 }
@@ -235,7 +238,9 @@ export function setCollaborators(
 /**
  * 获取宝宝的协作者列表
  */
-export function getCollaborators(babyId: string): BabyCollaborator[] | undefined {
+export function getCollaborators(
+  babyId: string,
+): BabyCollaborator[] | undefined {
   return collaboratorsMap.value.get(babyId);
 }
 
@@ -244,7 +249,7 @@ export function getCollaborators(babyId: string): BabyCollaborator[] | undefined
  */
 export function setMyPermission(
   babyId: string,
-  permission: MyPermission
+  permission: MyPermission,
 ): void {
   myPermissionsMap.value.set(babyId, permission);
 }
@@ -267,4 +272,10 @@ export function clearCollaboratorData(babyId: string): void {
 // ============ 导出 ============
 
 // 直接导出 computed 对象，支持响应式
-export { babyList, currentBabyId, currentBaby, collaboratorsMap, myPermissionsMap };
+export {
+  babyList,
+  currentBabyId,
+  currentBaby,
+  collaboratorsMap,
+  myPermissionsMap,
+};

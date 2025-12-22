@@ -90,7 +90,9 @@ export async function apiCreateGrowthRecord(
 export async function apiGetGrowthRecordById(
   recordId: string,
 ): Promise<GrowthRecordResponse> {
-  const response = await get<GrowthRecordResponse>(`/growth-records/${recordId}`);
+  const response = await get<GrowthRecordResponse>(
+    `/growth-records/${recordId}`,
+  );
   if (!response.data) {
     throw new Error(response.message || "获取成长记录失败");
   }

@@ -15,18 +15,31 @@
         @click="handleToggleReminder(template)"
       >
         <view class="item-left">
-          <image v-if="template.icon" :src="template.icon" class="item-icon" mode="aspectFit" />
-          <view v-else class="item-icon-placeholder">{{ getIconEmoji(template.type) }}</view>
+          <image
+            v-if="template.icon"
+            :src="template.icon"
+            class="item-icon"
+            mode="aspectFit"
+          />
+          <view v-else class="item-icon-placeholder">{{
+            getIconEmoji(template.type)
+          }}</view>
 
           <view class="item-info">
             <text class="item-title">{{ template.title }}</text>
             <text class="item-desc">{{ template.description }}</text>
 
             <!-- 授权状态提示 -->
-            <text v-if="getAuthStatus(template.type) === 'ban'" class="item-status error">
+            <text
+              v-if="getAuthStatus(template.type) === 'ban'"
+              class="item-status error"
+            >
               已拒绝,请在微信设置中手动开启
             </text>
-            <text v-else-if="getAuthStatus(template.type) === 'reject'" class="item-status warning">
+            <text
+              v-else-if="getAuthStatus(template.type) === 'reject'"
+              class="item-status warning"
+            >
               暂未授权
             </text>
           </view>
@@ -73,7 +86,8 @@
     <!-- 底部说明 -->
     <view class="footer-note">
       <text class="note-text">
-        💡 提示:订阅消息由微信官方管理,您可以在微信的"设置 > 通知 > 订阅消息"中管理所有订阅
+        💡 提示:订阅消息由微信官方管理,您可以在微信的"设置 > 通知 >
+        订阅消息"中管理所有订阅
       </text>
     </view>
 
@@ -87,8 +101,8 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
-import type { SubscribeMessageType, SubscribeMessageTemplate } from '@/types'
+import { ref, computed, onMounted } from "vue";
+import type { SubscribeMessageType, SubscribeMessageTemplate } from "@/types";
 import {
   getAllTemplateConfigs,
   getAuthStatus as _getAuthStatus,
@@ -98,163 +112,172 @@ import {
   disableReminder,
   getAllReminderConfigs,
   hasEnabledReminders as _hasEnabledReminders,
-} from '@/store/subscribe'
-import { StorageKeys, removeStorage } from '@/utils/storage'
+} from "@/store/subscribe";
+import { StorageKeys, removeStorage } from "@/utils/storage";
 
-const templates = ref<SubscribeMessageTemplate[]>([])
-const vaccineAdvanceDays = ref(3)
-const feedingIntervalMinutes = ref(180)
+const templates = ref<SubscribeMessageTemplate[]>([]);
+const vaccineAdvanceDays = ref(3);
+const feedingIntervalMinutes = ref(180);
 
 onMounted(() => {
-  loadTemplates()
-  loadAdvancedSettings()
-})
+  loadTemplates();
+  loadAdvancedSettings();
+});
 
 /** 加载模板配置 */
 function loadTemplates() {
-  templates.value = getAllTemplateConfigs().sort((a, b) => b.priority - a.priority)
+  templates.value = getAllTemplateConfigs().sort(
+    (a, b) => b.priority - a.priority,
+  );
 }
 
 /** 加载高级设置 */
 function loadAdvancedSettings() {
-  const vaccineConfig = getReminderConfig('vaccine_reminder')
+  const vaccineConfig = getReminderConfig("vaccine_reminder");
   if (vaccineConfig?.advanceDays) {
-    vaccineAdvanceDays.value = vaccineConfig.advanceDays
+    vaccineAdvanceDays.value = vaccineConfig.advanceDays;
   }
 
-  const breastConfig = getReminderConfig('breast_feeding_reminder')
+  const breastConfig = getReminderConfig("breast_feeding_reminder");
   if (breastConfig?.intervalMinutes) {
-    feedingIntervalMinutes.value = breastConfig.intervalMinutes
+    feedingIntervalMinutes.value = breastConfig.intervalMinutes;
   }
 }
 
 /** 获取授权状态 */
 function getAuthStatus(type: SubscribeMessageType) {
-  return _getAuthStatus(type)
+  return _getAuthStatus(type);
 }
 
 /** 获取提醒启用状态 */
 function getReminderEnabled(type: SubscribeMessageType) {
-  const config = getReminderConfig(type)
-  return config?.enabled || false
+  const config = getReminderConfig(type);
+  return config?.enabled || false;
 }
 
 /** 是否有已启用的提醒 */
 const hasEnabledReminders = computed(() => {
-  return _hasEnabledReminders()
-})
+  return _hasEnabledReminders();
+});
 
 /** 疫苗提醒是否启用 */
 const vaccineReminderEnabled = computed(() => {
-  return getReminderEnabled('vaccine_reminder')
-})
+  return getReminderEnabled("vaccine_reminder");
+});
 
 /** 喂养提醒是否启用 */
 const feedingReminderEnabled = computed(() => {
   return (
-    getReminderEnabled('breast_feeding_reminder') || getReminderEnabled('bottle_feeding_reminder')
-  )
-})
+    getReminderEnabled("breast_feeding_reminder") ||
+    getReminderEnabled("bottle_feeding_reminder")
+  );
+});
 
 /** 获取图标emoji */
 function getIconEmoji(type: SubscribeMessageType): string {
   const emojiMap: Record<SubscribeMessageType, string> = {
-    vaccine_reminder: '💉',
-    breast_feeding_reminder: '🤱',
-    bottle_feeding_reminder: '🍼',
-    pump_reminder: '🔔',
-    feeding_duration_alert: '⏰',
-  }
-  return emojiMap[type] || '🔔'
+    vaccine_reminder: "💉",
+    breast_feeding_reminder: "🤱",
+    bottle_feeding_reminder: "🍼",
+    pump_reminder: "🔔",
+    feeding_duration_alert: "⏰",
+  };
+  return emojiMap[type] || "🔔";
 }
 
 /** 点击提醒项 */
 function handleToggleReminder(template: SubscribeMessageTemplate) {
-  const enabled = getReminderEnabled(template.type)
-  handleSwitchChange(template, !enabled)
+  const enabled = getReminderEnabled(template.type);
+  handleSwitchChange(template, !enabled);
 }
 
 /** 开关切换 */
-async function handleSwitchChange(template: SubscribeMessageTemplate, value: boolean) {
+async function handleSwitchChange(
+  template: SubscribeMessageTemplate,
+  value: boolean,
+) {
   if (value) {
     // 启用提醒
-    const success = await enableReminder(template.type)
+    const success = await enableReminder(template.type);
     if (!success) {
       // 恢复开关状态
-      const config = getReminderConfig(template.type)
+      const config = getReminderConfig(template.type);
       if (config) {
-        config.enabled = false
+        config.enabled = false;
       }
     }
     // 刷新模板列表以更新 UI
-    loadTemplates()
+    loadTemplates();
   } else {
     // 禁用提醒
     uni.showModal({
-      title: '确认关闭',
+      title: "确认关闭",
       content: `确定关闭"${template.title}"提醒吗?`,
       success: (res) => {
         if (res.confirm) {
-          disableReminder(template.type)
+          disableReminder(template.type);
           uni.showToast({
-            title: '已关闭提醒',
-            icon: 'success',
-          })
+            title: "已关闭提醒",
+            icon: "success",
+          });
           // 刷新模板列表以更新 UI
-          loadTemplates()
+          loadTemplates();
         }
       },
-    })
+    });
   }
 }
 
 /** 疫苗提前天数变更 */
 function handleVaccineAdvanceDaysChange(value: number) {
-  updateReminderConfig('vaccine_reminder', {
+  updateReminderConfig("vaccine_reminder", {
     advanceDays: value,
-  })
+  });
   uni.showToast({
     title: `已设置为提前${value}天`,
-    icon: 'success',
-  })
+    icon: "success",
+  });
 }
 
 /** 喂养间隔变更 */
 function handleFeedingIntervalChange(value: number) {
-  const types: SubscribeMessageType[] = ['breast_feeding_reminder', 'bottle_feeding_reminder']
+  const types: SubscribeMessageType[] = [
+    "breast_feeding_reminder",
+    "bottle_feeding_reminder",
+  ];
   types.forEach((type) => {
     if (getReminderEnabled(type)) {
       updateReminderConfig(type, {
         intervalMinutes: value,
-      })
+      });
     }
-  })
+  });
   uni.showToast({
     title: `已设置为${value}分钟`,
-    icon: 'success',
-  })
+    icon: "success",
+  });
 }
 
 /** 清除授权记录(调试用) */
 function handleClearRecords() {
   uni.showModal({
-    title: '确认操作',
-    content: '确定清除所有授权记录吗?(仅用于调试)',
+    title: "确认操作",
+    content: "确定清除所有授权记录吗?(仅用于调试)",
     success: (res) => {
       if (res.confirm) {
-        removeStorage(StorageKeys.SUBSCRIBE_AUTH_RECORDS)
-        removeStorage(StorageKeys.SUBSCRIBE_GUIDE_RECORDS)
-        removeStorage(StorageKeys.SUBSCRIBE_REMINDER_CONFIGS)
+        removeStorage(StorageKeys.SUBSCRIBE_AUTH_RECORDS);
+        removeStorage(StorageKeys.SUBSCRIBE_GUIDE_RECORDS);
+        removeStorage(StorageKeys.SUBSCRIBE_REMINDER_CONFIGS);
         uni.showToast({
-          title: '已清除',
-          icon: 'success',
-        })
+          title: "已清除",
+          icon: "success",
+        });
         setTimeout(() => {
-          uni.navigateBack()
-        }, 1500)
+          uni.navigateBack();
+        }, 1500);
       }
     },
-  })
+  });
 }
 </script>
 

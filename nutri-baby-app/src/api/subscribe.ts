@@ -2,61 +2,61 @@
  * 订阅消息 API 接口封装
  */
 
-import { request } from '@/utils/request'
+import { get, post } from "@/utils/request";
 
 /**
  * 订阅授权记录
  */
 export interface SubscribeAuthRecord {
-  templateId: string
-  templateType: string
-  status: 'accept' | 'reject'
+  templateId: string;
+  templateType: string;
+  status: "accept" | "reject";
 }
 
 /**
  * 订阅授权响应
  */
 export interface SubscribeAuthResponse {
-  successCount: number
-  failedCount: number
+  successCount: number;
+  failedCount: number;
 }
 
 /**
  * 订阅项
  */
 export interface SubscriptionItem {
-  templateType: string
-  templateId: string
-  status: 'available' | 'used' | 'expired'
-  subscribeTime: number // Unix timestamp (秒)
-  expireTime?: number // Unix timestamp (秒)
+  templateType: string;
+  templateId: string;
+  status: "available" | "used" | "expired";
+  subscribeTime: number; // Unix timestamp (秒)
+  expireTime?: number; // Unix timestamp (秒)
 }
 
 /**
  * 订阅状态响应
  */
 export interface SubscribeStatusResponse {
-  subscriptions: SubscriptionItem[]
+  subscriptions: SubscriptionItem[];
 }
 
 /**
  * 消息日志项
  */
 export interface MessageLogItem {
-  id: number
-  templateType: string
-  sendStatus: 'success' | 'failed' | 'pending'
-  errmsg?: string
-  sendTime?: number // Unix timestamp (秒)
-  createdAt: number // Unix timestamp (秒)
+  id: number;
+  templateType: string;
+  sendStatus: "success" | "failed" | "pending";
+  errmsg?: string;
+  sendTime?: number; // Unix timestamp (秒)
+  createdAt: number; // Unix timestamp (秒)
 }
 
 /**
  * 消息日志响应
  */
 export interface MessageLogsResponse {
-  logs: MessageLogItem[]
-  total: number
+  logs: MessageLogItem[];
+  total: number;
 }
 
 /**
@@ -65,11 +65,13 @@ export interface MessageLogsResponse {
  * @returns Promise<SubscribeAuthResponse>
  */
 export async function saveSubscribeAuth(
-  records: SubscribeAuthRecord[]
+  records: SubscribeAuthRecord[],
 ): Promise<SubscribeAuthResponse> {
-  return request.post<SubscribeAuthResponse>('/api/v1/subscribe/authorize', {
-    records
-  })
+  const res = await post<SubscribeAuthResponse>("/api/v1/subscribe/authorize", {
+    records,
+  });
+  if (!res.data) throw new Error(res.message || "上报失败");
+  return res.data;
 }
 
 /**
@@ -77,7 +79,9 @@ export async function saveSubscribeAuth(
  * @returns Promise<SubscribeStatusResponse>
  */
 export async function getSubscribeStatus(): Promise<SubscribeStatusResponse> {
-  return request.get<SubscribeStatusResponse>('/api/v1/subscribe/status')
+  const res = await get<SubscribeStatusResponse>("/api/v1/subscribe/status");
+  if (!res.data) throw new Error(res.message || "获取失败");
+  return res.data;
 }
 
 /**
@@ -86,9 +90,9 @@ export async function getSubscribeStatus(): Promise<SubscribeStatusResponse> {
  * @returns Promise<void>
  */
 export async function cancelSubscription(templateType: string): Promise<void> {
-  return request.post('/api/v1/subscribe/cancel', {
-    templateType
-  })
+  await post("/api/v1/subscribe/cancel", {
+    templateType,
+  });
 }
 
 /**
@@ -99,26 +103,28 @@ export async function cancelSubscription(templateType: string): Promise<void> {
  */
 export async function getMessageLogs(
   page: number = 1,
-  pageSize: number = 20
+  pageSize: number = 20,
 ): Promise<MessageLogsResponse> {
-  const offset = (page - 1) * pageSize
-  return request.get<MessageLogsResponse>('/api/v1/subscribe/logs', {
+  const offset = (page - 1) * pageSize;
+  const res = await get<MessageLogsResponse>("/api/v1/subscribe/logs", {
     offset,
-    limit: pageSize
-  })
+    limit: pageSize,
+  });
+  if (!res.data) throw new Error(res.message || "获取失败");
+  return res.data;
 }
 
 /**
  * 喂养提醒请求数据
  */
 export interface FeedingReminderRequest {
-  babyId: string
-  feedingType: 'breast' | 'bottle'
-  lastFeedingTime: number // 上次喂养时间(Unix时间戳,毫秒)
-  lastFeedingDuration?: number // 上次喂养时长(秒)
-  lastFeedingAmount?: number // 上次喂养量(ml)
-  lastFeedingBottleType?: 'formula' | 'breast-milk'
-  templateType: 'breast_feeding_reminder' | 'bottle_feeding_reminder'
+  babyId: string;
+  feedingType: "breast" | "bottle";
+  lastFeedingTime: number; // 上次喂养时间(Unix时间戳,毫秒)
+  lastFeedingDuration?: number; // 上次喂养时长(秒)
+  lastFeedingAmount?: number; // 上次喂养量(ml)
+  lastFeedingBottleType?: "formula" | "breast-milk";
+  templateType: "breast_feeding_reminder" | "bottle_feeding_reminder";
 }
 
 /**
@@ -127,9 +133,9 @@ export interface FeedingReminderRequest {
  * @returns Promise<void>
  */
 export async function sendFeedingReminder(
-  data: FeedingReminderRequest
+  data: FeedingReminderRequest,
 ): Promise<void> {
-  return request.post('/api/v1/subscribe/feeding-reminder', data)
+  await post("/api/v1/subscribe/feeding-reminder", data);
 }
 
 /**
@@ -142,11 +148,11 @@ export async function sendFeedingReminder(
 export async function sendFeedingDurationAlert(
   babyId: string,
   startTime: number,
-  duration: number
+  duration: number,
 ): Promise<void> {
-  return request.post('/api/v1/subscribe/feeding-duration-alert', {
+  await post("/api/v1/subscribe/feeding-duration-alert", {
     babyId,
     startTime,
-    duration
-  })
+    duration,
+  });
 }

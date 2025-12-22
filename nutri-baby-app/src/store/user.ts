@@ -4,27 +4,32 @@
  *
  * ⚠️ 向后兼容: 所有导出函数的签名保持不变,页面组件无需修改
  */
-import { ref } from 'vue'
-import type { UserInfo } from '@/types'
-import { StorageKeys, getStorage, setStorage, removeStorage } from '@/utils/storage'
-import * as authApi from '@/api/auth'
+import { ref } from "vue";
+import type { UserInfo } from "@/types";
+import {
+  StorageKeys,
+  getStorage,
+  setStorage,
+  removeStorage,
+} from "@/utils/storage";
+import * as authApi from "@/api/auth";
 
 // ============ 状态定义 ============
 
 // 用户信息 - 延迟初始化
-const userInfo = ref<UserInfo | null>(null)
+const userInfo = ref<UserInfo | null>(null);
 
 // Token - 延迟初始化
-const token = ref<string | null>(null)
+const token = ref<string | null>(null);
 
 // 是否已登录
-const isLoggedIn = ref<boolean>(false)
+const isLoggedIn = ref<boolean>(false);
 
 // 是否为新用户 (首次登录且无宝宝)
-const isNewUser = ref<boolean>(false)
+const isNewUser = ref<boolean>(false);
 
 // 初始化标记
-let isInitialized = false
+let isInitialized = false;
 
 /**
  * 初始化用户状态 - 从本地存储恢复
@@ -34,22 +39,22 @@ let isInitialized = false
  */
 export function initialize() {
   if (!isInitialized) {
-    userInfo.value = getStorage<UserInfo>(StorageKeys.USER_INFO) || null
-    token.value = getStorage<string>(StorageKeys.TOKEN) || null
-    isLoggedIn.value = !!userInfo.value && !!token.value
-    isInitialized = true
+    userInfo.value = getStorage<UserInfo>(StorageKeys.USER_INFO) || null;
+    token.value = getStorage<string>(StorageKeys.TOKEN) || null;
+    isLoggedIn.value = !!userInfo.value && !!token.value;
+    isInitialized = true;
 
-    console.log('[User Store] initialized:', {
+    console.log("[User Store] initialized:", {
       hasUserInfo: !!userInfo.value,
       hasToken: !!token.value,
-      isLoggedIn: isLoggedIn.value
-    })
+      isLoggedIn: isLoggedIn.value,
+    });
   }
 }
 
 // 延迟初始化函数 (保留向后兼容性)
 function initializeIfNeeded() {
-  initialize()
+  initialize();
 }
 
 // ============ 本地操作函数 ============
@@ -60,9 +65,9 @@ function initializeIfNeeded() {
  * ⚠️ 向后兼容: 函数签名保持不变
  */
 export function setUserInfo(info: UserInfo) {
-  userInfo.value = info
-  isLoggedIn.value = true
-  setStorage(StorageKeys.USER_INFO, info)
+  userInfo.value = info;
+  isLoggedIn.value = true;
+  setStorage(StorageKeys.USER_INFO, info);
 }
 
 /**
@@ -71,8 +76,8 @@ export function setUserInfo(info: UserInfo) {
  * ⚠️ 向后兼容: 函数签名保持不变
  */
 export function setToken(newToken: string) {
-  token.value = newToken
-  setStorage(StorageKeys.TOKEN, newToken)
+  token.value = newToken;
+  setStorage(StorageKeys.TOKEN, newToken);
 }
 
 /**
@@ -81,8 +86,8 @@ export function setToken(newToken: string) {
  * ⚠️ 向后兼容: 函数签名保持不变
  */
 export function getUserInfo() {
-  initializeIfNeeded()
-  return userInfo.value
+  initializeIfNeeded();
+  return userInfo.value;
 }
 
 /**
@@ -91,7 +96,7 @@ export function getUserInfo() {
  * ⚠️ 向后兼容: 函数签名保持不变
  */
 export function getToken() {
-  return token.value
+  return token.value;
 }
 
 /**
@@ -100,17 +105,17 @@ export function getToken() {
  * ⚠️ 向后兼容: 函数签名保持不变
  */
 export function clearUserInfo() {
-  userInfo.value = null
-  isLoggedIn.value = false
-  token.value = null
-  removeStorage(StorageKeys.USER_INFO)
-  removeStorage(StorageKeys.TOKEN)
+  userInfo.value = null;
+  isLoggedIn.value = false;
+  token.value = null;
+  removeStorage(StorageKeys.USER_INFO);
+  removeStorage(StorageKeys.TOKEN);
 
   // 清除邀请码缓存，防止退出登录后重复跳转到加入页面
-  removeStorage(StorageKeys.PENDING_INVITE_CODE)
-  removeStorage(StorageKeys.AUTO_JOIN_AFTER_LOGIN)
-  removeStorage(StorageKeys.CURRENT_BABY_ID)
-  removeStorage(StorageKeys.BABY_LIST)
+  removeStorage(StorageKeys.PENDING_INVITE_CODE);
+  removeStorage(StorageKeys.AUTO_JOIN_AFTER_LOGIN);
+  removeStorage(StorageKeys.CURRENT_BABY_ID);
+  removeStorage(StorageKeys.BABY_LIST);
 }
 
 /**
@@ -119,7 +124,7 @@ export function clearUserInfo() {
  * ⚠️ 向后兼容: 函数签名保持不变
  */
 export function checkLoginStatus(): boolean {
-  return isLoggedIn.value && !!token.value
+  return isLoggedIn.value && !!token.value;
 }
 
 /**
@@ -128,7 +133,7 @@ export function checkLoginStatus(): boolean {
  * ⚠️ 向后兼容: 函数签名保持不变
  */
 export function getIsNewUser() {
-  return isNewUser.value
+  return isNewUser.value;
 }
 
 /**
@@ -137,7 +142,7 @@ export function getIsNewUser() {
  * ⚠️ 向后兼容: 函数签名保持不变
  */
 export function setIsNewUser(value: boolean) {
-  isNewUser.value = value
+  isNewUser.value = value;
 }
 
 // ============ API 调用函数(委托给 api 层) ============
@@ -153,9 +158,9 @@ export async function wxLogin(): Promise<UserInfo> {
   return new Promise((resolve, reject) => {
     // 1. 调用 uni.login 获取 code
     uni.login({
-      provider: 'weixin',
+      provider: "weixin",
       success: async (loginRes) => {
-        console.log('uni.login success:', loginRes)
+        console.log("uni.login success:", loginRes);
 
         try {
           // 2. 调用后端登录接口
@@ -163,43 +168,47 @@ export async function wxLogin(): Promise<UserInfo> {
             code: loginRes.code,
             // 注意: 由于 getUserProfile 已废弃,nickName 和 avatarUrl 可以不传
             // 或者使用头像昵称填写组件获取
-          })
+          });
 
-          console.log('API login response:', response)
+          console.log("API login response:", response);
 
-          const { token: newToken, userInfo: user, isNewUser: newUser } = response
+          const {
+            token: newToken,
+            userInfo: user,
+            isNewUser: newUser,
+          } = response;
 
           // 3. 保存 Token 和用户信息
-          setToken(newToken)
-          setUserInfo(user)
-          isNewUser.value = newUser
+          setToken(newToken);
+          setUserInfo(user);
+          isNewUser.value = newUser;
 
           uni.showToast({
-            title: '登录成功',
-            icon: 'success',
+            title: "登录成功",
+            icon: "success",
             duration: 1500,
-          })
+          });
 
-          resolve(user)
+          resolve(user);
         } catch (error: any) {
-          console.error('login API error:', error)
+          console.error("login API error:", error);
           uni.showToast({
-            title: error.message || '登录失败',
-            icon: 'none',
-          })
-          reject(error)
+            title: error.message || "登录失败",
+            icon: "none",
+          });
+          reject(error);
         }
       },
       fail: (err) => {
-        console.error('uni.login fail:', err)
+        console.error("uni.login fail:", err);
         uni.showToast({
-          title: '微信登录失败',
-          icon: 'none',
-        })
-        reject(err)
+          title: "微信登录失败",
+          icon: "none",
+        });
+        reject(err);
       },
-    })
-  })
+    });
+  });
 }
 
 /**
@@ -211,16 +220,16 @@ export async function wxLogin(): Promise<UserInfo> {
  */
 export async function refreshToken(): Promise<string> {
   try {
-    const response = await authApi.apiRefreshToken()
+    const response = await authApi.apiRefreshToken();
 
-    const newToken = response.token
-    setToken(newToken)
-    return newToken
+    const newToken = response.token;
+    setToken(newToken);
+    return newToken;
   } catch (error: any) {
-    console.error('refresh token error:', error)
+    console.error("refresh token error:", error);
     // Token 刷新失败,清除登录状态
-    clearUserInfo()
-    throw error
+    clearUserInfo();
+    throw error;
   }
 }
 
@@ -233,13 +242,13 @@ export async function refreshToken(): Promise<string> {
  */
 export async function fetchUserInfo(): Promise<UserInfo> {
   try {
-    const response = await authApi.apiFetchUserInfo()
+    const response = await authApi.apiFetchUserInfo();
 
-    setUserInfo(response)
-    return response
+    setUserInfo(response);
+    return response;
   } catch (error: any) {
-    console.error('fetch user info error:', error)
-    throw error
+    console.error("fetch user info error:", error);
+    throw error;
   }
 }
 
@@ -250,24 +259,27 @@ export async function fetchUserInfo(): Promise<UserInfo> {
  *
  * ⚠️ 向后兼容: 函数签名保持不变
  */
-export async function updateUserInfo(nickName: string, avatarUrl: string): Promise<UserInfo> {
+export async function updateUserInfo(
+  nickName: string,
+  avatarUrl: string,
+): Promise<UserInfo> {
   try {
-    const response = await authApi.apiUpdateUserInfo({ nickName, avatarUrl })
+    const response = await authApi.apiUpdateUserInfo({ nickName, avatarUrl });
 
-    setUserInfo(response)
+    setUserInfo(response);
     uni.showToast({
-      title: '更新成功',
-      icon: 'success',
-    })
+      title: "更新成功",
+      icon: "success",
+    });
 
-    return response
+    return response;
   } catch (error: any) {
-    console.error('update user info error:', error)
+    console.error("update user info error:", error);
     uni.showToast({
-      title: error.message || '更新失败',
-      icon: 'none',
-    })
-    throw error
+      title: error.message || "更新失败",
+      icon: "none",
+    });
+    throw error;
   }
 }
 
@@ -280,25 +292,25 @@ export async function updateUserInfo(nickName: string, avatarUrl: string): Promi
  */
 export async function setDefaultBaby(babyId: string): Promise<void> {
   try {
-    await authApi.apiSetDefaultBaby(babyId)
+    await authApi.apiSetDefaultBaby(babyId);
 
     // 更新本地用户信息中的默认宝宝ID
     if (userInfo.value) {
-      userInfo.value.defaultBabyId = babyId
-      setStorage(StorageKeys.USER_INFO, userInfo.value)
+      userInfo.value.defaultBabyId = babyId;
+      setStorage(StorageKeys.USER_INFO, userInfo.value);
     }
 
     uni.showToast({
-      title: '设置成功',
-      icon: 'success',
-    })
+      title: "设置成功",
+      icon: "success",
+    });
   } catch (error: any) {
-    console.error('set default baby error:', error)
+    console.error("set default baby error:", error);
     uni.showToast({
-      title: error.message || '设置失败',
-      icon: 'none',
-    })
-    throw error
+      title: error.message || "设置失败",
+      icon: "none",
+    });
+    throw error;
   }
 }
 
@@ -309,19 +321,19 @@ export async function setDefaultBaby(babyId: string): Promise<void> {
  */
 export async function logout() {
   // 清除本地存储的用户信息和 Token
-  clearUserInfo()
+  clearUserInfo();
 
   // 跳转到登录页
   uni.reLaunch({
-    url: '/pages/user/login',
-  })
+    url: "/pages/user/login",
+  });
 
   uni.showToast({
-    title: '已退出登录',
-    icon: 'success',
-  })
+    title: "已退出登录",
+    icon: "success",
+  });
 }
 
 // ============ 导出 ============
 
-export { userInfo, isLoggedIn, token, isNewUser }
+export { userInfo, isLoggedIn, token, isNewUser };

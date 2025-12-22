@@ -1,34 +1,48 @@
-/**
- * Wot Design Uni 全局主题配置
- *
- * 通过覆盖 Wot UI 的 CSS 变量来自定义主题
- * 文档: https://wot-ui.cn/component/config-provider.html
- */
-
-/* 覆盖 Wot UI 默认主题色 - 母婴APP风格（温暖玫粉） */
+/* 覆盖 Wot UI 默认主题色 - 母婴智能成长风格 */
 page {
-  /* 主题色：温暖玫粉 */
-  --wot-color-theme: #32dc6e;
+  /* 主题核心色 */
+  --wot-color-theme: #7BD3A2;
+  --wot-color-success: #7BD3A2;
+  --wot-color-warning: #FFD166;
+  --wot-color-danger: #FA8C8C;
+  --wot-color-info: #94A3B8;
 
-  /* 按钮 */
-  --wd-button-primary-bg: #32dc6e;
+  /* 背景色 */
+  --wot-color-bg: #F7FBF9;
+  
+  /* 按钮定制 */
+  --wd-button-primary-bg: #7BD3A2;
   --wd-button-primary-color: #ffffff;
+  --wd-button-border-radius: 12px;
 
   /* 其他使用主题色的组件 */
-  --wd-color-primary: #32dc6e;
+  --wd-color-primary: #7BD3A2;
 
-  /* Radio 单选框 */
-  --wd-radio-checked-color: #32dc6e;
+  /* 交互反馈 */
+  --wd-radio-checked-color: #7BD3A2;
+  --wd-checkbox-checked-color: #7BD3A2;
+  --wd-switch-on-color: #7BD3A2;
+  --wd-tabs-line-color: #7BD3A2;
+  --wd-picker-title-color: #7BD3A2;
+  --wd-tabs-nav-bg: transparent;
 
-  /* Checkbox 复选框 */
-  --wd-checkbox-checked-color: #32dc6e;
+  /* 面板与圆角 */
+  --wd-card-radius: 20px;
+  --wd-popup-radius: 24px;
+}
 
-  /* Switch 开关 */
-  --wd-switch-on-color: #32dc6e;
+/* 全局布局辅助类 */
+.safe-area-bottom {
+  padding-bottom: constant(safe-area-inset-bottom);
+  padding-bottom: env(safe-area-inset-bottom);
+}
 
-  /* Tabs 标签页 */
-  --wd-tabs-line-color: #32dc6e;
+.glass-card {
+  background: rgba(255, 255, 255, 0.8) !important;
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+}
 
-  /* Picker 选择器 */
-  --wd-picker-title-color: #32dc6e;
+.premium-shadow {
+  box-shadow: 0 12px 30px rgba(123, 211, 162, 0.12) !important;
 }

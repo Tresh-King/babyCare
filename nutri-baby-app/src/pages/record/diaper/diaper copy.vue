@@ -37,79 +37,85 @@
     </view>
 
     <!-- 详情区域 -->
-    <wd-popup v-model="showDetails" position="bottom" :safe-area-inset-bottom="true">
+    <wd-popup
+      v-model="showDetails"
+      position="bottom"
+      :safe-area-inset-bottom="true"
+    >
       <view class="details-section">
         <view class="section-title">详细信息</view>
 
-      <!-- 记录时间选择 -->
-      <wd-cell-group>
-        <wd-datetime-picker
-          label="记录时间"
-          v-model="recordDateTime"
-          type="datetime"
-          :min-date="minDateTime"
-          :max-date="maxDateTime"
-          @confirm="onDateTimeConfirm"
-        />
-      </wd-cell-group>
+        <!-- 记录时间选择 -->
+        <wd-cell-group>
+          <wd-datetime-picker
+            v-model="recordDateTime"
+            label="记录时间"
+            type="datetime"
+            :min-date="minDateTime"
+            :max-date="maxDateTime"
+            @confirm="onDateTimeConfirm"
+          />
+        </wd-cell-group>
 
-      <!-- 大便详情 (仅大便/两者时显示) -->
-      <view v-if="form.type === 'poop' || form.type === 'both'" class="poop-details">
-        <!-- 大便颜色 -->
-        <view class="detail-item">
-          <view class="detail-label">颜色</view>
-          <view class="color-selector">
-            <view
-              v-for="color in poopColors"
-              :key="color.value"
-              class="color-item"
-              :class="{ active: form.poopColor === color.value }"
-              @click="form.poopColor = color.value"
-            >
+        <!-- 大便详情 (仅大便/两者时显示) -->
+        <view
+          v-if="form.type === 'poop' || form.type === 'both'"
+          class="poop-details"
+        >
+          <!-- 大便颜色 -->
+          <view class="detail-item">
+            <view class="detail-label">颜色</view>
+            <view class="color-selector">
               <view
-                class="color-circle"
-                :style="{ background: color.color }"
-              ></view>
-              <text class="color-label">{{ color.label }}</text>
+                v-for="color in poopColors"
+                :key="color.value"
+                class="color-item"
+                :class="{ active: form.poopColor === color.value }"
+                @click="form.poopColor = color.value"
+              >
+                <view
+                  class="color-circle"
+                  :style="{ background: color.color }"
+                ></view>
+                <text class="color-label">{{ color.label }}</text>
+              </view>
             </view>
+          </view>
+
+          <!-- 大便性状 -->
+          <view class="detail-item">
+            <view class="detail-label">性状</view>
+            <wd-radio-group v-model="form.poopTexture" shape="check" inline>
+              <wd-radio
+                v-for="texture in poopTextures"
+                :key="texture.value"
+                :value="texture.value"
+              >
+                {{ texture.label }}
+              </wd-radio>
+            </wd-radio-group>
           </view>
         </view>
 
-        <!-- 大便性状 -->
-        <view class="detail-item">
-          <view class="detail-label">性状</view>
-          <wd-radio-group v-model="form.poopTexture" shape="check" inline>
-            <wd-radio
-              v-for="texture in poopTextures"
-              :key="texture.value"
-              :value="texture.value"
-            >
-              {{ texture.label }}
-            </wd-radio>
-          </wd-radio-group>
-        </view>
-      </view>
-
-      <!-- 备注 -->
-      <wd-cell-group>
-
         <!-- 备注 -->
-        <wd-cell title="备注">
-          <wd-textarea
-            v-model="form.note"
-            placeholder="有什么需要记录的吗?"
-            :max-length="200"
-            :rows="2"
-          />
-        </wd-cell>
-      </wd-cell-group>
+        <wd-cell-group>
+          <!-- 备注 -->
+          <wd-cell title="备注">
+            <wd-textarea
+              v-model="form.note"
+              placeholder="有什么需要记录的吗?"
+              :max-length="200"
+              :rows="2"
+            />
+          </wd-cell>
+        </wd-cell-group>
 
-      <!-- 提交按钮 -->
-      <view class="submit-button">
-        <wd-button type="primary" size="large" block @click="handleSubmit">
-          {{ isEditing ? '更新记录' : '保存记录' }}
-        </wd-button>
-      </view>
+        <!-- 提交按钮 -->
+        <view class="submit-button">
+          <wd-button type="primary" size="large" block @click="handleSubmit">
+            {{ isEditing ? "更新记录" : "保存记录" }}
+          </wd-button>
+        </view>
       </view>
     </wd-popup>
 
@@ -137,7 +143,7 @@ const form = ref<{
   poopColor: PoopColor | undefined;
   poopTexture: PoopTexture | undefined;
   note: string;
-  }>({
+}>({
   type: "pee",
   poopColor: undefined,
   poopTexture: undefined,
@@ -150,7 +156,7 @@ const showDetails = ref(false);
 // 日期时间选择器
 const recordDateTime = ref(new Date().getTime()); // 记录时间,初始为当前时间戳
 const minDateTime = ref(
-  new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).getTime()
+  new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).getTime(),
 ); // 最小: 30天前
 const maxDateTime = ref(new Date().getTime()); // 最大: 当前时间
 
@@ -159,7 +165,6 @@ const onDateTimeConfirm = ({ value }: { value: number }) => {
   recordDateTime.value = value;
   console.log("[Diaper] 记录时间已更改为:", new Date(value));
 };
-
 
 // 格式化记录时间显示
 const formatRecordTime = (timestamp: number): string => {
@@ -210,7 +215,7 @@ const loadDiaperRecord = async (recordId: string) => {
       type: record.diaperType as DiaperType,
       poopColor: record.pooColor as PoopColor | undefined,
       poopTexture: record.pooTexture as PoopTexture | undefined,
-      note: record.note || '',
+      note: record.note || "",
     };
 
     // 设置记录时间
@@ -219,12 +224,12 @@ const loadDiaperRecord = async (recordId: string) => {
     // 打开详情弹窗
     showDetails.value = true;
 
-    console.log('[Diaper] 已加载记录数据:', record);
+    console.log("[Diaper] 已加载记录数据:", record);
   } catch (error: any) {
-    console.error('[Diaper] 加载记录失败:', error);
+    console.error("[Diaper] 加载记录失败:", error);
     uni.showToast({
-      title: error.message || '加载记录失败',
-      icon: 'none',
+      title: error.message || "加载记录失败",
+      icon: "none",
     });
     setTimeout(() => {
       uni.navigateBack();

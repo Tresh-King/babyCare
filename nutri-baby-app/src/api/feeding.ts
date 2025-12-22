@@ -2,8 +2,8 @@
  * 喂养记录 API 接口
  * 职责: 纯 API 调用,无状态,无副作用
  */
-import { get, post, put, del } from '@/utils/request'
-import type { FeedingDetail } from '@/types'
+import { get, post, put, del } from "@/utils/request";
+import type { FeedingDetail } from "@/types";
 
 // ============ 类型定义 ============
 
@@ -11,43 +11,43 @@ import type { FeedingDetail } from '@/types'
  * API 响应: 喂养记录详情
  */
 export interface FeedingRecordResponse {
-  recordId: string
-  babyId: string
-  feedingType: 'breast' | 'bottle' | 'food'
-  amount?: number
-  duration?: number
-  detail: FeedingDetail // 强类型 Detail
-  note?: string
-  feedingTime: number
-  actualCompleteTime?: number // 实际喂养完成时间戳(毫秒)
-  createBy: string
-  createTime: number
+  recordId: string;
+  babyId: string;
+  feedingType: "breast" | "bottle" | "food";
+  amount?: number;
+  duration?: number;
+  detail: FeedingDetail; // 强类型 Detail
+  note?: string;
+  feedingTime: number;
+  actualCompleteTime?: number; // 实际喂养完成时间戳(毫秒)
+  createBy: string;
+  createTime: number;
 }
 
 /**
  * API 响应: 喂养记录列表
  */
 export interface FeedingRecordsListResponse {
-  records: FeedingRecordResponse[]
-  total: number
-  page: number
-  pageSize: number
+  records: FeedingRecordResponse[];
+  total: number;
+  page: number;
+  pageSize: number;
 }
 
 /**
  * API 请求: 创建喂养记录
  */
 export interface CreateFeedingRecordRequest {
-  babyId: string
-  feedingType: 'breast' | 'bottle' | 'food'
-  amount?: number
-  duration?: number
-  detail: FeedingDetail // 强类型 Detail
-  note?: string
-  feedingTime: number
-  actualCompleteTime?: number // 实际喂养完成时间戳(毫秒)，用于准确计算提醒时间
+  babyId: string;
+  feedingType: "breast" | "bottle" | "food";
+  amount?: number;
+  duration?: number;
+  detail: FeedingDetail; // 强类型 Detail
+  note?: string;
+  feedingTime: number;
+  actualCompleteTime?: number; // 实际喂养完成时间戳(毫秒)，用于准确计算提醒时间
   // 新增：用户自定义提醒间隔
-  reminderInterval?: number // 提醒间隔(分钟)
+  reminderInterval?: number; // 提醒间隔(分钟)
 }
 
 // ============ API 函数 ============
@@ -59,14 +59,17 @@ export interface CreateFeedingRecordRequest {
  * @returns Promise<FeedingRecordsListResponse>
  */
 export async function apiFetchFeedingRecords(params: {
-  babyId: string
-  startTime?: number
-  endTime?: number
-  page?: number
-  pageSize?: number
+  babyId: string;
+  startTime?: number;
+  endTime?: number;
+  page?: number;
+  pageSize?: number;
 }): Promise<FeedingRecordsListResponse> {
-  const response = await get<FeedingRecordsListResponse>('/feeding-records', params)
-  return response.data || { records: [], total: 0, page: 1, pageSize: 10 }
+  const response = await get<FeedingRecordsListResponse>(
+    "/feeding-records",
+    params,
+  );
+  return response.data || { records: [], total: 0, page: 1, pageSize: 10 };
 }
 
 /**
@@ -76,13 +79,13 @@ export async function apiFetchFeedingRecords(params: {
  * @returns Promise<FeedingRecordResponse>
  */
 export async function apiCreateFeedingRecord(
-  data: CreateFeedingRecordRequest
+  data: CreateFeedingRecordRequest,
 ): Promise<FeedingRecordResponse> {
-  const response = await post<FeedingRecordResponse>('/feeding-records', data)
+  const response = await post<FeedingRecordResponse>("/feeding-records", data);
   if (!response.data) {
-    throw new Error(response.message || '创建喂养记录失败')
+    throw new Error(response.message || "创建喂养记录失败");
   }
-  return response.data
+  return response.data;
 }
 
 /**
@@ -92,13 +95,15 @@ export async function apiCreateFeedingRecord(
  * @returns Promise<FeedingRecordResponse>
  */
 export async function apiGetFeedingRecordById(
-  recordId: string
+  recordId: string,
 ): Promise<FeedingRecordResponse> {
-  const response = await get<FeedingRecordResponse>(`/feeding-records/${recordId}`)
+  const response = await get<FeedingRecordResponse>(
+    `/feeding-records/${recordId}`,
+  );
   if (!response.data) {
-    throw new Error(response.message || '获取喂养记录失败')
+    throw new Error(response.message || "获取喂养记录失败");
   }
-  return response.data
+  return response.data;
 }
 
 /**
@@ -110,9 +115,9 @@ export async function apiGetFeedingRecordById(
  */
 export async function apiUpdateFeedingRecord(
   recordId: string,
-  data: Partial<CreateFeedingRecordRequest>
+  data: Partial<CreateFeedingRecordRequest>,
 ): Promise<void> {
-  await put(`/feeding-records/${recordId}`, data)
+  await put(`/feeding-records/${recordId}`, data);
 }
 
 /**
@@ -122,5 +127,5 @@ export async function apiUpdateFeedingRecord(
  * @returns Promise<void>
  */
 export async function apiDeleteFeedingRecord(recordId: string): Promise<void> {
-  await del(`/feeding-records/${recordId}`)
+  await del(`/feeding-records/${recordId}`);
 }

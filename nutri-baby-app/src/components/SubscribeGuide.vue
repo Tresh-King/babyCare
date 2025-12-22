@@ -10,13 +10,18 @@
     <view class="subscribe-guide">
       <!-- 头部图标 -->
       <view class="guide-header">
-        <image v-if="template?.icon" :src="template.icon" class="guide-icon" mode="aspectFit" />
+        <image
+          v-if="template?.icon"
+          :src="template.icon"
+          class="guide-icon"
+          mode="aspectFit"
+        />
         <view v-else class="guide-icon-placeholder">🔔</view>
       </view>
 
       <!-- 标题和描述 -->
       <view class="guide-content">
-        <text class="guide-title">{{ template?.title || '消息提醒' }}</text>
+        <text class="guide-title">{{ template?.title || "消息提醒" }}</text>
         <text class="guide-description">{{ description }}</text>
 
         <!-- 场景化提示 -->
@@ -26,16 +31,28 @@
 
         <!-- 微信授权说明 -->
         <view class="wechat-auth-notice">
-          <text class="notice-text">📱 点击下方按钮后,将跳转到微信官方授权页面</text>
+          <text class="notice-text"
+            >📱 点击下方按钮后,将跳转到微信官方授权页面</text
+          >
         </view>
       </view>
 
       <!-- 操作按钮 -->
       <view class="guide-actions">
-        <wd-button size="large" type="primary" class="btn-confirm" @click="handleConfirm">
+        <wd-button
+          size="large"
+          type="primary"
+          class="btn-confirm"
+          @click="handleConfirm"
+        >
           {{ confirmText }}
         </wd-button>
-        <wd-button size="large" type="default" class="btn-cancel" @click="handleDismiss">
+        <wd-button
+          size="large"
+          type="default"
+          class="btn-cancel"
+          @click="handleDismiss"
+        >
           {{ dismissText }}
         </wd-button>
       </view>
@@ -49,45 +66,47 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch } from 'vue'
-import type { SubscribeMessageType, SubscribeMessageTemplate } from '@/types'
+import { ref, computed, watch } from "vue";
+import type { SubscribeMessageType, SubscribeMessageTemplate } from "@/types";
 import {
   getTemplateConfig,
   recordGuideShown,
   dismissGuideForever,
   requestSubscribeMessage,
-} from '@/store/subscribe'
+} from "@/store/subscribe";
 
 interface Props {
   /** 消息类型 */
-  type: SubscribeMessageType
+  type: SubscribeMessageType;
   /** 是否显示 */
-  modelValue: boolean
+  modelValue: boolean;
   /** 场景化提示文案 */
-  contextMessage?: string
+  contextMessage?: string;
   /** 自定义描述 */
-  customDescription?: string
+  customDescription?: string;
   /** 确认按钮文案 */
-  confirmText?: string
+  confirmText?: string;
   /** 取消按钮文案 */
-  dismissText?: string
+  dismissText?: string;
 }
 
 interface Emits {
-  (e: 'update:modelValue', value: boolean): void
-  (e: 'confirm', result: 'accept' | 'reject'): void
-  (e: 'dismiss'): void
+  (e: "update:modelValue", value: boolean): void;
+  (e: "confirm", result: "accept" | "reject"): void;
+  (e: "dismiss"): void;
 }
 
 const props = withDefaults(defineProps<Props>(), {
-  confirmText: '立即开启',
-  dismissText: '暂不需要',
-})
+  confirmText: "立即开启",
+  dismissText: "暂不需要",
+  contextMessage: "",
+  customDescription: "",
+});
 
-const emit = defineEmits<Emits>()
+const emit = defineEmits<Emits>();
 
-const visible = ref(false)
-const template = ref<SubscribeMessageTemplate>()
+const visible = ref(false);
+const template = ref<SubscribeMessageTemplate>();
 
 // 监听 modelValue 变化
 watch(
@@ -98,91 +117,95 @@ watch(
       // 对于一次性订阅消息,每次都需要显示,不需要在组件内部再次检查
 
       // 加载模板配置
-      template.value = getTemplateConfig(props.type)
+      template.value = getTemplateConfig(props.type);
       if (!template.value) {
-        console.error(`[SubscribeGuide] 未找到模板配置: ${props.type}`)
-        emit('update:modelValue', false)
-        return
+        console.error(`[SubscribeGuide] 未找到模板配置: ${props.type}`);
+        emit("update:modelValue", false);
+        return;
       }
 
-      visible.value = true
-      recordGuideShown(props.type)
+      visible.value = true;
+      recordGuideShown(props.type);
     } else {
-      visible.value = false
+      visible.value = false;
     }
   },
-  { immediate: true }
-)
+  { immediate: true },
+);
 
 // 描述文案
 const description = computed(() => {
-  return props.customDescription || template.value?.description || '开启消息提醒,不错过重要时刻'
-})
+  return (
+    props.customDescription ||
+    template.value?.description ||
+    "开启消息提醒,不错过重要时刻"
+  );
+});
 
 /** 关闭弹窗 */
 function handleClose() {
-  visible.value = false
-  emit('update:modelValue', false)
+  visible.value = false;
+  emit("update:modelValue", false);
 }
 
 /** 确认开启 */
 async function handleConfirm() {
   try {
-    uni.showLoading({ title: '请求授权中...' })
+    uni.showLoading({ title: "请求授权中..." });
 
-    const results = await requestSubscribeMessage([props.type])
-    const result = results.get(props.type)
+    const results = await requestSubscribeMessage([props.type]);
+    const result = results.get(props.type);
 
-    uni.hideLoading()
+    uni.hideLoading();
 
-    if (result === 'accept') {
+    if (result === "accept") {
       uni.showToast({
-        title: '开启成功',
-        icon: 'success',
-      })
-      emit('confirm', 'accept')
+        title: "开启成功",
+        icon: "success",
+      });
+      emit("confirm", "accept");
     } else {
       uni.showToast({
-        title: '您拒绝了授权',
-        icon: 'none',
-      })
-      emit('confirm', 'reject')
+        title: "您拒绝了授权",
+        icon: "none",
+      });
+      emit("confirm", "reject");
     }
 
-    handleClose()
+    handleClose();
   } catch (error: any) {
-    uni.hideLoading()
-    console.error('[SubscribeGuide] 授权失败:', error)
+    uni.hideLoading();
+    console.error("[SubscribeGuide] 授权失败:", error);
     uni.showToast({
-      title: '授权失败',
-      icon: 'none',
-    })
-    handleClose()
+      title: "授权失败",
+      icon: "none",
+    });
+    handleClose();
   }
 }
 
 /** 暂不需要 */
 function handleDismiss() {
-  emit('dismiss')
-  handleClose()
+  emit("dismiss");
+  handleClose();
 }
 
 /** 不再提示 */
 function handleNeverShow() {
   uni.showModal({
-    title: '确认操作',
+    title: "确认操作",
     content: '确定不再显示该提示?您仍可在"设置"中手动开启提醒',
     success: (res) => {
       if (res.confirm) {
-        dismissGuideForever(props.type)
+        dismissGuideForever(props.type);
         uni.showToast({
-          title: '已关闭提示',
-          icon: 'success',
-        })
-        handleClose()
+          title: "已关闭提示",
+          icon: "success",
+        });
+        handleClose();
       }
     },
-  })
+  });
 }
 </script>
 

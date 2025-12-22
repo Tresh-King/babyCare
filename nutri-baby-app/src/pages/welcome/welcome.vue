@@ -2,11 +2,7 @@
   <view class="welcome-container">
     <!-- 欢迎标题 -->
     <view class="welcome-header">
-      <image
-        class="logo"
-        src="/static/logo.png"
-        mode="aspectFit"
-      />
+      <image class="logo" src="/static/logo.png" mode="aspectFit" />
       <text class="title">欢迎使用宝宝喂养日志</text>
       <text class="subtitle">记录宝宝成长的每一个精彩瞬间</text>
     </view>
@@ -65,79 +61,81 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
-import { onLoad } from '@dcloudio/uni-app'
-import { joinBabyCollaboration } from '@/store/collaborator'
-import { fetchBabyList } from '@/store/baby'
+import { ref } from "vue";
+import { onLoad } from "@dcloudio/uni-app";
+import { joinBabyCollaboration } from "@/store/collaborator";
+import { fetchBabyList } from "@/store/baby";
 
 // 处理创建宝宝
 const handleCreateBaby = () => {
   uni.navigateTo({
-    url: '/pages/baby/edit/edit'
-  })
-}
+    url: "/pages/baby/edit/edit",
+  });
+};
 
 // 处理加入协作 (去家庭化架构)
 const handleJoinBaby = () => {
   uni.showModal({
-    title: '加入宝宝协作',
-    content: '请扫描二维码或点击微信分享链接加入',
+    title: "加入宝宝协作",
+    content: "请扫描二维码或点击微信分享链接加入",
     showCancel: true,
-    cancelText: '取消',
-    confirmText: '手动输入',
+    cancelText: "取消",
+    confirmText: "手动输入",
     success: (modalRes) => {
       if (modalRes.confirm) {
         // 手动输入邀请码
         uni.showModal({
-          title: '输入邀请信息',
+          title: "输入邀请信息",
           editable: true,
-          placeholderText: '格式: babyId,token',
+          placeholderText: "格式: babyId,token",
           success: async (res) => {
             if (res.confirm && res.content) {
               try {
                 // 解析输入: babyId,token
-                const [babyId, token] = res.content.split(',').map(s => s.trim())
+                const [babyId, token] = res.content
+                  .split(",")
+                  .map((s) => s.trim());
 
                 if (!babyId || !token) {
-                  throw new Error('格式错误,请输入: babyId,token')
+                  throw new Error("格式错误,请输入: babyId,token");
                 }
 
                 // 调用加入协作 API
-                await joinBabyCollaboration(babyId, token)
+                await joinBabyCollaboration(babyId, token);
 
                 uni.showToast({
-                  title: '加入成功',
-                  icon: 'success',
-                  duration: 2000
-                })
+                  title: "加入成功",
+                  icon: "success",
+                  duration: 2000,
+                });
 
                 // 刷新宝宝列表
-                await fetchBabyList()
+                await fetchBabyList();
 
                 // 跳转到首页
                 setTimeout(() => {
                   uni.reLaunch({
-                    url: '/pages/index/index'
-                  })
-                }, 2000)
+                    url: "/pages/index/index",
+                  });
+                }, 2000);
               } catch (error: any) {
                 uni.showToast({
-                  title: error.message || '加入失败',
-                  icon: 'none',
-                  duration: 2000
-                })
+                  title: error.message || "加入失败",
+                  icon: "none",
+                  duration: 2000,
+                });
               }
             }
-          }
-        })
+          },
+        });
       }
-    }
-  })
-}
+    },
+  });
+};
 
 onLoad(() => {
-  console.log('[Welcome] 欢迎页面加载 (去家庭化架构)')
-})
+  console.log("[Welcome] 欢迎页面加载 (去家庭化架构)");
+});
 </script>
 
 <style lang="scss" scoped>

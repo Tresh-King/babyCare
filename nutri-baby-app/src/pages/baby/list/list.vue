@@ -1,808 +1,512 @@
 <template>
-  <view class="baby-list-page">
-    <!-- 头部 -->
+  <view class="baby-list-container">
+    <wd-navbar
+      title="切换宝宝"
+      left-text="返回"
+      left-arrow
+      fixed
+      placeholder
+      safe-area-inset-top
+      @click-left="goBack"
+    />
 
-    <!-- 宝宝列表 -->
-    <view class="baby-list">
-      <view
-        v-for="baby in babyList"
-        :key="baby.babyId"
-        class="baby-card"
-        :class="{
-          active: baby.babyId === currentBabyId,
-          'is-default': baby.babyId === userInfo?.defaultBabyId,
-        }"
-      >
-        <!-- 默认标签 -->
+    <scroll-view class="baby-scroll" scroll-y>
+      <view class="baby-list-content">
         <view
-          v-if="baby.babyId === userInfo?.defaultBabyId"
-          class="default-badge"
+          v-for="baby in babyList"
+          :key="baby.babyId"
+          class="baby-premium-card"
+          :class="{ active: baby.babyId === currentBabyId }"
+          @click="handleSelectBaby(baby.babyId)"
         >
-          <wd-icon name="star-on" size="12" color="#ff9800" />
-          <text>默认</text>
+          <view class="card-bg-gradient"></view>
+
+          <view class="card-main">
+            <view class="avatar-box premium-shadow">
+              <image
+                :src="baby.avatarUrl || '/static/default.png'"
+                mode="aspectFill"
+                class="avatar"
+              />
+              <view v-if="baby.gender" class="gender-tag" :class="baby.gender">
+                <text>{{ baby.gender === "male" ? "♂" : "♀" }}</text>
+              </view>
+            </view>
+
+            <view class="info-box">
+              <view class="name-row">
+                <text class="name">{{ baby.name }}</text>
+                <text
+                  v-if="baby.babyId === userInfo?.defaultBabyId"
+                  class="default-badge"
+                  >默认</text
+                >
+              </view>
+              <text class="age-text">{{ calculateAge(baby.birthDate) }}</text>
+
+              <!-- 快捷状态展示 -->
+              <view class="collaborator-row">
+                <BabyCollaboratorsPreview
+                  :baby-id="baby.babyId"
+                  :collaborators="getCollaborators(baby.babyId)"
+                  @click.stop
+                />
+              </view>
+            </view>
+
+            <view class="selection-indicator">
+              <view class="check-orb">
+                <wd-icon name="check-bold" size="14" color="#FFF" />
+              </view>
+            </view>
+          </view>
+
+          <!-- 卡片操作区 -->
+          <view class="card-actions-dock" @click.stop>
+            <view
+              class="action-item"
+              @click="handleInvite(baby.babyId, baby.name)"
+            >
+              <wd-icon name="share" size="16" />
+              <text>邀请</text>
+            </view>
+            <view class="action-divider"></view>
+            <view class="action-item" @click="handleEdit(baby.babyId)">
+              <wd-icon name="edit-1" size="16" />
+              <text>编辑</text>
+            </view>
+            <view
+              v-if="baby.babyId !== userInfo?.defaultBabyId"
+              class="action-divider"
+            ></view>
+            <view
+              v-if="baby.babyId !== userInfo?.defaultBabyId"
+              class="action-item special"
+              @click="handleSetDefault(baby.babyId, baby.name)"
+            >
+              <wd-icon name="star" size="16" />
+              <text>设为默认</text>
+            </view>
+          </view>
         </view>
 
-        <!-- 卡片头部 - 点击切换宝宝 -->
-        <view class="card-header" @click="handleSelectBaby(baby.babyId)">
-          <!-- 头像 -->
-          <view class="baby-avatar">
-            <image
-              v-if="baby.avatarUrl"
-              :src="baby.avatarUrl"
-              mode="aspectFill"
-            />
-            <image v-else src="/static/default.png" mode="aspectFill" />
+        <!-- 添加卡片 -->
+        <view class="add-baby-trigger premium-shadow" @click="handleAdd">
+          <view class="add-pulsar">
+            <wd-icon name="add" size="32" color="#7BD3A2" />
           </view>
-
-          <!-- 信息 -->
-          <view class="baby-info">
-            <view class="name-row">
-              <text class="baby-name">{{ baby.name }}</text>
-              <text v-if="baby.nickname" class="nickname">{{
-                baby.nickname
-              }}</text>
-            </view>
-            <view class="baby-meta">
-              <text class="gender">{{
-                baby.gender === "male" ? "👦 男宝" : "👧 女宝"
-              }}</text>
-              <text class="divider">|</text>
-              <text class="age">{{ calculateAge(baby.birthDate) }}</text>
-            </view>
-          </view>
-
-          <!-- 选中标记 -->
-          <view v-if="baby.babyId === currentBabyId" class="check-icon">
-            <wd-icon name="check-circle-fill" size="24" color="#fa2c19" />
-          </view>
-        </view>
-
-        <!-- 分割线 -->
-        <view class="divider-line" />
-
-        <!-- 操作按钮区域 -->
-        <view class="card-actions" @click.stop>
-          <!-- 邀请协作按钮（全宽） -->
-          <wd-button
-            size="small"
-            plain
-            type="primary"
-            class="full-width-btn"
-            @click="handleInvite(baby.babyId, baby.name)"
-          >
-            <wd-icon name="share" size="14" />
-            邀请协作
-          </wd-button>
-
-          <!-- 设为默认按钮（全宽，仅当非默认宝宝时显示） -->
-          <wd-button
-            v-if="baby.babyId !== userInfo?.defaultBabyId"
-            size="small"
-            plain
-            type="warning"
-            class="full-width-btn"
-            @click="handleSetDefault(baby.babyId, baby.name)"
-          >
-            <wd-icon name="star" size="14" />
-            设为默认
-          </wd-button>
-
-          <!-- 协作者预览组件 -->
-          <BabyCollaboratorsPreview
-            :baby-id="baby.babyId"
-            :collaborators="getCollaborators(baby.babyId)"
-            @go-to-collaborators="() => handleGoToCollaborators(baby.babyId, baby.name)"
-            @set-relationship="() => handleSetRelationship(baby.babyId, baby.name)"
-          />
-
-          <!-- 编辑和删除按钮（并排，各占50%） -->
-          <view class="action-row">
-            <wd-button
-              size="small"
-              plain
-              type="warning"
-              @click="handleEdit(baby.babyId)"
-            >
-              <wd-icon name="edit" size="14" />
-              编辑
-            </wd-button>
-            <wd-button
-              size="small"
-              plain
-              type="danger"
-              @click="handleDelete(baby.babyId)"
-            >
-              <wd-icon name="delete-thin" size="14" />
-              删除
-            </wd-button>
-          </view>
+          <text class="add-label">添加新成员</text>
         </view>
       </view>
 
-      <!-- 空状态 -->
-      <wd-status-tip
-        v-if="babyList.length === 0"
-        description="还没有添加宝宝"
-        image="empty"
-      >
-        <template #description>
-          <text class="empty-text">还没有添加宝宝哦~</text>
-        </template>
-      </wd-status-tip>
-    </view>
+      <view v-if="babyList.length === 0" class="empty-state-v2">
+        <wd-status-tip image="content" description="还没有添加宝宝哦" />
+      </view>
+    </scroll-view>
 
-    <!-- 关系设置弹窗 -->
+    <!-- 关系设置弹窗 (Redesigned) -->
     <wd-popup
       v-model="relationshipDialog.show"
       position="bottom"
-      custom-style="height: auto; padding: 0"
+      round
       safe-area-inset-bottom
     >
-      <view class="relationship-popup">
+      <view class="premium-popup-content">
         <view class="popup-header">
-          <text class="popup-title">设置与{{ relationshipDialog.babyName }}的关系</text>
-          <wd-icon name="close" @click="relationshipDialog.show = false" />
-        </view>
-
-        <!-- 自定义输入 -->
-        <view class="custom-input-section">
-          <wd-input
-            v-model="relationshipDialog.customRelationship"
-            placeholder="或输入自定义关系"
-            clearable
+          <text class="popup-title">设置您的身份</text>
+          <wd-icon
+            name="close"
+            size="24"
+            @click="relationshipDialog.show = false"
           />
         </view>
 
-        <!-- 预设选项 -->
-        <view class="preset-options">
+        <view class="relationship-grid">
           <view
-            v-for="option in relationshipOptions"
-            :key="option.value"
-            class="option-item"
-            :class="{ active: relationshipDialog.selectedRelationship === option.value }"
-            @click="selectRelationship(option.value)"
+            v-for="opt in relationshipOptions"
+            :key="opt.value"
+            class="rel-pill"
+            :class="{
+              active: relationshipDialog.selectedRelationship === opt.value,
+            }"
+            @click="selectRelationship(opt.value)"
           >
-            <text>{{ option.label }}</text>
+            {{ opt.label }}
           </view>
         </view>
 
-        <!-- 确认按钮 -->
+        <view class="custom-rel-input">
+          <wd-input
+            v-model="relationshipDialog.customRelationship"
+            placeholder="或输入其他身份（如：干妈、表姐）"
+            no-border
+          />
+        </view>
+
         <view class="popup-footer">
-          <wd-button
-            type="primary"
-            size="large"
-            block
-            @click="confirmRelationship"
+          <wd-button block round type="primary" @click="confirmRelationship"
+            >确认并保存</wd-button
           >
-            确认
-          </wd-button>
         </view>
       </view>
     </wd-popup>
-
-    <!-- 添加按钮 -->
-    <view class="add-button">
-      <wd-button type="primary" size="large" block @click="handleAdd">
-        <wd-icon name="plus" size="18" />
-        添加宝宝
-      </wd-button>
-    </view>
   </view>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, computed } from "vue";
-import { currentBabyId, setCurrentBaby, getCollaborators, setCollaborators } from "@/store/baby";
+import { ref, onMounted } from "vue";
+import {
+  currentBabyId,
+  setCurrentBaby,
+  getCollaborators,
+  setCollaborators,
+} from "@/store/baby";
 import { userInfo, setDefaultBaby, getUserInfo } from "@/store/user";
 import { calculateAge } from "@/utils/date";
+import { goBack } from "@/utils/common";
 import BabyCollaboratorsPreview from "@/components/BabyCollaboratorsPreview.vue";
 import { updateFamilyMember } from "@/store/collaborator";
-
-// 直接调用 API 层
 import * as babyApi from "@/api/baby";
 import * as collaboratorApi from "@/api/collaborator";
 
-// 宝宝列表(从 API 获取)
 const babyList = ref<babyApi.BabyProfileResponse[]>([]);
-
-// 关系设置弹窗状态
 const relationshipDialog = ref({
   show: false,
-  babyId: '',
-  babyName: '',
-  selectedRelationship: '',
-  customRelationship: '',
+  babyId: "",
+  babyName: "",
+  selectedRelationship: "",
+  customRelationship: "",
 });
 
-// 关系选项
 const relationshipOptions = [
-  { label: '爸爸', value: '爸爸' },
-  { label: '妈妈', value: '妈妈' },
-  { label: '爷爷', value: '爷爷' },
-  { label: '奶奶', value: '奶奶' },
-  { label: '外公', value: '外公' },
-  { label: '外婆', value: '外婆' },
-  { label: '叔叔', value: '叔叔' },
-  { label: '姑姑', value: '姑姑' },
-  { label: '舅舅', value: '舅舅' },
-  { label: '姨妈', value: '姨妈' },
-  { label: '其他亲友', value: '其他亲友' },
+  { label: "爸爸", value: "爸爸" },
+  { label: "妈妈", value: "妈妈" },
+  { label: "爷爷", value: "爷爷" },
+  { label: "奶奶", value: "奶奶" },
+  { label: "外公", value: "外公" },
+  { label: "外婆", value: "外婆" },
+  { label: "其他亲友", value: "其他亲友" },
 ];
 
-// 加载宝宝列表
 const loadBabyList = async () => {
   try {
     const data = await babyApi.apiFetchBabyList();
     babyList.value = data;
-
-    // 并行加载所有宝宝的协作者信息
     await Promise.all(
       data.map(async (baby) => {
         try {
-          const collaborators = await collaboratorApi.apiFetchCollaborators(baby.babyId);
+          const collaborators = await collaboratorApi.apiFetchCollaborators(
+            baby.babyId,
+          );
           setCollaborators(baby.babyId, collaborators);
-        } catch (error) {
-          console.warn(`[BabyList] 加载宝宝 ${baby.babyId} 的协作者失败:`, error);
-          // 协作者加载失败不影响宝宝列表显示
-        }
-      })
+        } catch (e) {}
+      }),
     );
-
-    // 如果只有一个宝宝且没有选中任何宝宝,默认选中这个宝宝
     if (babyList.value.length === 1 && !currentBabyId.value) {
-      const firstBaby = babyList.value[0];
-      if (firstBaby) {
-        setCurrentBaby(firstBaby.babyId);
-        console.log("[BabyList] 自动选中唯一的宝宝:", firstBaby.name);
-      }
+      const baby = babyList.value[0];
+      if (baby) setCurrentBaby(baby.babyId);
     }
-  } catch (error) {
-    console.error("[BabyList] 加载宝宝列表失败:", error);
-    uni.showToast({
-      title: "加载失败",
-      icon: "none",
-    });
-  }
+  } catch (error) {}
 };
 
-// 页面加载时初始化
-onMounted(() => {
-  loadBabyList();
-});
+onMounted(() => loadBabyList());
 
-// 选择宝宝
 const handleSelectBaby = (id: string) => {
   setCurrentBaby(id);
-  console.log("[BabyList] 切换宝宝:", id);
-  uni.showToast({
-    title: "已切换",
-    icon: "success",
-    duration: 1000,
-  });
-
-  // 延迟返回首页
-  setTimeout(() => {
-    uni.navigateBack();
-  }, 1000);
+  uni.showToast({ title: "切换成功", icon: "success", duration: 1000 });
+  setTimeout(() => uni.navigateBack(), 1000);
 };
 
-// 设置为默认宝宝
 const handleSetDefault = async (id: string, name: string) => {
   try {
     await setDefaultBaby(id);
-    console.log("[BabyList] 设置默认宝宝:", name);
-  } catch (error) {
-    console.error("[BabyList] 设置默认宝宝失败:", error);
-  }
+    uni.showToast({ title: "设置默认成功", icon: "success" });
+  } catch (error) {}
 };
 
-// 添加宝宝
-const handleAdd = () => {
+const handleAdd = () => uni.navigateTo({ url: "/pages/baby/edit/edit" });
+const handleInvite = (id: string, name: string) =>
   uni.navigateTo({
-    url: "/pages/baby/edit/edit",
+    url: `/pages/baby/invite/invite?babyId=${id}&babyName=${encodeURIComponent(name)}`,
   });
-};
+const handleEdit = (id: string) =>
+  uni.navigateTo({ url: `/pages/baby/edit/edit?id=${id}` });
 
-// 邀请协作者
-const handleInvite = (id: string, name: string) => {
-  uni.navigateTo({
-    url: `/pages/baby/invite/invite?babyId=${id}&babyName=${encodeURIComponent(
-      name
-    )}`,
-  });
-};
-
-// 进入协作者管理页面
-const handleGoToCollaborators = (babyId: string, babyName: string) => {
-  uni.navigateTo({
-    url: `/pages/baby/collaborators/collaborators?babyId=${babyId}&babyName=${encodeURIComponent(
-      babyName
-    )}`,
-  });
-};
-
-// 编辑宝宝
-const handleEdit = (id: string) => {
-  uni.navigateTo({
-    url: `/pages/baby/edit/edit?id=${id}`,
-  });
-};
-
-// 删除宝宝
-const handleDelete = (id: string) => {
-  uni.showModal({
-    title: "确认删除",
-    content: "删除后无法恢复,确定要删除这个宝宝吗?",
-    success: async (res) => {
-      if (res.confirm) {
-        try {
-          await babyApi.apiDeleteBaby(id);
-
-          uni.showToast({
-            title: "删除成功",
-            icon: "success",
-          });
-
-          // 重新加载宝宝列表
-          await loadBabyList();
-
-          // 如果删除的是当前选中的宝宝,需要清除选中状态
-          if (id === currentBabyId.value) {
-            setCurrentBaby("");
-          }
-        } catch (error: any) {
-          uni.showToast({
-            title: error.message || "删除失败",
-            icon: "none",
-          });
-        }
-      }
-    },
-  });
-};
-
-// 设置关系
-const handleSetRelationship = (babyId: string, babyName: string) => {
-  // 获取当前用户在该宝宝中的关系
-  const collaborators = getCollaborators(babyId) || [];
-  const currentUser = getUserInfo();
-  const myCollaborator = collaborators.find(c => c.openid === currentUser?.openid);
-  
-  relationshipDialog.value = {
-    show: true,
-    babyId,
-    babyName,
-    selectedRelationship: myCollaborator?.relationship || '',
-    customRelationship: '',
-  };
-};
-
-// 选择预设关系
 const selectRelationship = (value: string) => {
   relationshipDialog.value.selectedRelationship = value;
-  relationshipDialog.value.customRelationship = '';
+  relationshipDialog.value.customRelationship = "";
 };
 
-// 确认关系设置
 const confirmRelationship = async () => {
-  const { babyId, selectedRelationship, customRelationship } = relationshipDialog.value;
-  
-  // 优先使用自定义输入
+  const { babyId, selectedRelationship, customRelationship } =
+    relationshipDialog.value;
   const finalRelationship = customRelationship.trim() || selectedRelationship;
-  
-  if (!finalRelationship) {
-    uni.showToast({
-      title: '请选择或输入关系',
-      icon: 'none',
-    });
-    return;
-  }
-  
+  if (!finalRelationship) return;
   try {
     const currentUser = getUserInfo();
-    if (!currentUser?.openid) {
-      uni.showToast({
-        title: '用户信息异常',
-        icon: 'none',
-      });
-      return;
-    }
-    
+    if (!currentUser?.openid) return;
     await updateFamilyMember(babyId, currentUser.openid, {
       relationship: finalRelationship,
     });
-    
-    // 更新本地数据
     const collaborators = getCollaborators(babyId) || [];
-    const myCollaborator = collaborators.find(c => c.openid === currentUser.openid);
-    if (myCollaborator) {
-      myCollaborator.relationship = finalRelationship;
+    const myCollab = collaborators.find((c) => c.openid === currentUser.openid);
+    if (myCollab) {
+      myCollab.relationship = finalRelationship;
       setCollaborators(babyId, [...collaborators]);
     }
-    
     relationshipDialog.value.show = false;
-    
-  } catch (error: any) {
-    console.error('设置关系失败:', error);
-    uni.showToast({
-      title: error.message || '设置失败',
-      icon: 'none',
-    });
-  }
+  } catch (error) {}
 };
 </script>
 
 <style lang="scss" scoped>
-@import '@/styles/colors.scss';
-.baby-list-page {
+@import "@/styles/colors.scss";
+
+.baby-list-container {
   min-height: 100vh;
-  background: $gradient-bg-light;
-  padding-bottom: 140rpx;
-}
-
-.header {
-  background: $color-bg-primary;
-  padding: 40rpx 30rpx;
-  text-align: center;
-  box-shadow: $shadow-sm;
-}
-
-.title {
-  font-size: 36rpx;
-  font-weight: $font-weight-bold;
-  color: $color-text-primary;
-}
-
-.baby-list {
-  padding: 24rpx;
-}
-
-/* 卡片样式 */
-.baby-card {
-  background: $color-bg-primary;
-  border-radius: $radius-xl;
-  margin-bottom: $spacing-2xl;
-  overflow: hidden;
-  box-shadow: $shadow-md;
-  transition: all $transition-slow;
-  position: relative;
-
-  &.active {
-    box-shadow: 0 4rpx 20rpx rgba(50, 220, 110, 0.25);
-    border: 2px solid $color-primary;
-  }
-
-  &.is-default {
-    background: linear-gradient(135deg, rgba(50, 220, 110, 0.05) 0%, $color-bg-primary 20%);
-  }
-}
-
-/* 默认标签 */
-.default-badge {
-  position: absolute;
-  top: 16rpx;
-  right: 16rpx;
-  background: linear-gradient(135deg, $color-primary 0%, $color-primary-light 100%);
-  color: white;
-  font-size: 22rpx;
-  padding: 8rpx 16rpx;
-  border-radius: $radius-xl;
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  gap: 6rpx;
-  font-weight: $font-weight-bold;
-  box-shadow: $shadow-primary-md;
-  z-index: 10;
-
-  text {
-    line-height: 1;
-  }
-
-  .nut-icon {
-    line-height: 1;
-  }
-}
-
-/* 卡片头部 */
-.card-header {
-  padding: 30rpx;
-  display: flex;
-  align-items: center;
-  cursor: pointer;
-  transition: background $transition-base;
-
-  &:active {
-    background: rgba(0, 0, 0, 0.02);
-  }
-}
-
-.baby-avatar {
-  width: 120rpx;
-  height: 120rpx;
-  border-radius: $radius-full;
-  overflow: hidden;
-  flex-shrink: 0;
-  box-shadow: $shadow-md;
-
-  image {
-    width: 100%;
-    height: 100%;
-  }
-
-  .avatar-placeholder {
-    width: 100%;
-    height: 100%;
-    background: $gradient-primary;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 48rpx;
-    font-weight: $font-weight-bold;
-    color: white;
-  }
-}
-
-.baby-info {
-  flex: 1;
-  margin-left: 24rpx;
-  overflow: hidden;
-}
-
-.name-row {
-  display: flex;
-  align-items: center;
-  gap: 12rpx;
-  margin-bottom: 12rpx;
-  flex-wrap: wrap;
-}
-
-.baby-name {
-  font-size: 34rpx;
-  font-weight: $font-weight-bold;
-  color: $color-text-primary;
-  line-height: 1.2;
-}
-
-.nickname {
-  font-size: 26rpx;
-  color: $color-text-secondary;
   background: $color-bg-secondary;
-  padding: 4rpx 12rpx;
-  border-radius: $radius-md;
-  font-weight: $font-weight-normal;
 }
 
-.baby-meta {
-  font-size: 26rpx;
-  color: $color-text-secondary;
-  display: flex;
-  align-items: center;
-  gap: 12rpx;
-
-  .divider {
-    color: $color-border-light;
-  }
-
-  .gender {
-    font-weight: $font-weight-medium;
-  }
-
-  .age {
-    color: $color-text-secondary;
-  }
+.baby-scroll {
+  height: calc(100vh - 100rpx);
 }
 
-.check-icon {
-  margin-left: 16rpx;
-  flex-shrink: 0;
-  animation: scaleIn $transition-slow;
-}
-
-@keyframes scaleIn {
-  from {
-    transform: scale(0);
-  }
-  to {
-    transform: scale(1);
-  }
-}
-
-/* 分割线 */
-.divider-line {
-  height: 1rpx;
-  background: linear-gradient(
-    90deg,
-    transparent 0%,
-    $color-divider 50%,
-    transparent 100%
-  );
-  margin: 0 30rpx;
-}
-
-/* 操作按钮区域 */
-.card-actions {
-  padding: $spacing-md 30rpx 30rpx;
+.baby-list-content {
+  padding: 32rpx;
   display: flex;
   flex-direction: column;
-  gap: $spacing-md;
+  gap: 32rpx;
 }
 
-.full-width-btn {
-  // 兼容不同组件库渲染类名，保证按钮能占满整行
-  :deep(.nut-button),
-  :deep(.wd-button) {
-    width: 100%;
-    height: 64rpx;
-    font-size: 26rpx;
-    border-radius: $radius-md;
-    display: flex;
-    flex-direction: row;
-    align-items: center;
-    justify-content: center;
-    gap: 8rpx;
-    transition: all $transition-base;
-
-    &:active {
-      transform: scale(0.96);
-    }
-
-    // 确保图标和文字垂直居中对齐
-    .nut-icon {
-      line-height: 1;
-      vertical-align: middle;
-    }
-  }
-}
-
-.action-row {
-  // 使用两列网格布局，保证两个按钮各占 50% 且与上方全宽按钮保持同宽
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  column-gap: $spacing-md;
-  width: 100%;
-
-  :deep(.nut-button),
-  :deep(.wd-button) {
-    width: 100%;
-    height: 64rpx;
-    font-size: 26rpx;
-    border-radius: $radius-md;
-    display: flex;
-    flex-direction: row;
-    align-items: center;
-    justify-content: center;
-    gap: 8rpx;
-    transition: all $transition-base;
-
-    &:active {
-      transform: scale(0.96);
-    }
-
-    // 确保图标和文字垂直居中对齐
-    .nut-icon {
-      line-height: 1;
-      vertical-align: middle;
-    }
-  }
-}
-
-/* 空状态 */
-.empty-text {
-  color: $color-text-secondary;
-  font-size: 28rpx;
-}
-
-/* 添加按钮 */
-.add-button {
-  position: fixed;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  padding: $spacing-2xl;
-  background: linear-gradient(180deg, transparent 0%, $color-bg-primary 20%);
-  backdrop-filter: blur(10rpx);
-
-  :deep(.nut-button) {
-    height: 88rpx;
-    font-size: 32rpx;
-    border-radius: $radius-lg;
-    box-shadow: $shadow-primary-md;
-    display: flex;
-    flex-direction: row;
-    align-items: center;
-    justify-content: center;
-    gap: $spacing-md;
-
-    &:active {
-      transform: scale(0.98);
-    }
-
-    // 图标文字对齐
-    .nut-icon {
-      line-height: 1;
-    }
-  }
-}
-
-// ===== 关系设置弹窗 =====
-.relationship-popup {
-  background: $color-bg-primary;
-  border-radius: $radius-lg $radius-lg 0 0;
+.baby-premium-card {
+  position: relative;
+  background: #fff;
+  border-radius: $radius-lg;
+  padding: 40rpx;
   overflow: hidden;
+  border: 1px solid $color-border-light;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 
+  .card-bg-gradient {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 120rpx;
+    background: linear-gradient(
+      180deg,
+      rgba(123, 211, 162, 0.05) 0%,
+      transparent 100%
+    );
+  }
+
+  &.active {
+    border-color: $color-primary;
+    box-shadow: 0 12rpx 32rpx rgba(123, 211, 162, 0.15);
+    .selection-indicator .check-orb {
+      transform: scale(1);
+      opacity: 1;
+    }
+  }
+
+  .card-main {
+    display: flex;
+    gap: 32rpx;
+    position: relative;
+    z-index: 1;
+    margin-bottom: 32rpx;
+  }
+
+  .avatar-box {
+    position: relative;
+    width: 140rpx;
+    height: 140rpx;
+    border-radius: $radius-full;
+    .avatar {
+      width: 100%;
+      height: 100%;
+      border-radius: 50%;
+    }
+    .gender-tag {
+      position: absolute;
+      bottom: 0;
+      right: 0;
+      width: 40rpx;
+      height: 40rpx;
+      border-radius: 50%;
+      background: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 24rpx;
+      border: 1px solid $color-divider;
+      &.male {
+        color: #8cc7ff;
+      }
+      &.female {
+        color: #ff9ebc;
+      }
+    }
+  }
+
+  .info-box {
+    flex: 1;
+    .name-row {
+      display: flex;
+      align-items: center;
+      gap: 12rpx;
+      margin-bottom: 8rpx;
+      .name {
+        font-size: 34rpx;
+        font-weight: 800;
+        color: $color-text-primary;
+      }
+      .default-badge {
+        font-size: 20rpx;
+        background: $color-primary-lighter;
+        color: $color-primary-dark;
+        padding: 2rpx 12rpx;
+        border-radius: 100rpx;
+        font-weight: 700;
+      }
+    }
+    .age-text {
+      font-size: 26rpx;
+      color: $color-text-tertiary;
+      font-weight: 500;
+    }
+    .collaborator-row {
+      margin-top: 20rpx;
+    }
+  }
+
+  .selection-indicator {
+    .check-orb {
+      width: 48rpx;
+      height: 48rpx;
+      background: $color-primary;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transform: scale(0.5);
+      opacity: 0;
+      transition: all 0.3s;
+    }
+  }
+}
+
+.card-actions-dock {
+  border-top: 1rpx solid $color-divider;
+  padding-top: 24rpx;
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+
+  .action-item {
+    display: flex;
+    align-items: center;
+    gap: 8rpx;
+    font-size: 24rpx;
+    font-weight: 600;
+    color: $color-text-secondary;
+    padding: 12rpx 24rpx;
+    border-radius: 100rpx;
+    &.special {
+      color: $color-warning;
+    }
+    &:active {
+      background: $color-bg-secondary;
+    }
+  }
+
+  .action-divider {
+    width: 1px;
+    height: 24rpx;
+    background: $color-divider;
+  }
+}
+
+.add-baby-trigger {
+  background: #fff;
+  border-radius: $radius-lg;
+  height: 200rpx;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16rpx;
+  border: 4rpx dashed $color-border-light;
+
+  .add-pulsar {
+    animation: pulsar 2s infinite;
+  }
+  .add-label {
+    font-size: 28rpx;
+    font-weight: 700;
+    color: $color-text-tertiary;
+  }
+}
+
+@keyframes pulsar {
+  0% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.1);
+    opacity: 0.8;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.premium-popup-content {
+  padding: 40rpx;
   .popup-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: $spacing-lg $spacing-2xl;
-    border-bottom: 1rpx solid $color-border-primary;
-
+    margin-bottom: 40rpx;
     .popup-title {
-      font-size: $font-size-lg;
-      font-weight: $font-weight-semibold;
+      font-size: 34rpx;
+      font-weight: 800;
       color: $color-text-primary;
     }
+  }
+}
 
-    :deep(.wd-icon) {
-      font-size: 40rpx;
-      color: $color-text-secondary;
-      cursor: pointer;
+.relationship-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16rpx;
+  margin-bottom: 32rpx;
+  .rel-pill {
+    padding: 16rpx 32rpx;
+    background: $color-bg-secondary;
+    border-radius: $radius-md;
+    font-size: 26rpx;
+    font-weight: 600;
+    color: $color-text-secondary;
+    border: 1px solid transparent;
+    &.active {
+      background: $color-primary-lighter;
+      color: $color-primary;
+      border-color: $color-primary;
     }
   }
+}
 
-  .custom-input-section {
-    padding: $spacing-2xl;
-    border-bottom: 1rpx solid $color-border-primary;
+.custom-rel-input {
+  background: $color-bg-secondary;
+  border-radius: $radius-md;
+  padding: 12rpx 24rpx;
+  margin-bottom: 48rpx;
+}
 
-    :deep(.wd-input) {
-      background: $color-bg-secondary;
-      border-radius: $radius-md;
-      padding: $spacing-md;
-    }
-  }
-
-  .preset-options {
-    padding: $spacing-lg;
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: $spacing-md;
-    max-height: 400rpx;
-    overflow-y: auto;
-
-    .option-item {
-      padding: $spacing-lg;
-      background: $color-bg-secondary;
-      border: 2rpx solid $color-border-primary;
-      border-radius: $radius-md;
-      text-align: center;
-      font-size: $font-size-base;
-      color: $color-text-primary;
-      transition: all $transition-base;
-      cursor: pointer;
-
-      &:active {
-        transform: scale(0.95);
-      }
-
-      &.active {
-        background: $color-primary-lighter;
-        border-color: $color-primary;
-        color: $color-primary;
-        font-weight: $font-weight-semibold;
-      }
-    }
-  }
-
-  .popup-footer {
-    padding: $spacing-lg $spacing-2xl;
-    border-top: 1rpx solid $color-border-primary;
-
-    :deep(.wd-button) {
-      height: 88rpx;
-      font-size: $font-size-lg;
-      border-radius: $radius-md;
-    }
-  }
+.popup-footer {
+  margin-top: 40rpx;
 }
 </style>

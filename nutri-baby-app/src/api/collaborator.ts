@@ -3,12 +3,12 @@
  * 职责: 所有与协作者相关的API调用
  */
 
-import { get, post, put, del } from '@/utils/request';
+import { get, post, put, del } from "@/utils/request";
 import type {
   BabyCollaborator,
   InviteCollaboratorRequest,
   InviteCollaboratorResponse,
-} from '@/types/collaborator';
+} from "@/types/collaborator";
 
 /**
  * 获取宝宝的协作者列表
@@ -17,15 +17,15 @@ import type {
  * @returns 协作者列表
  */
 export async function apiFetchCollaborators(
-  babyId: string
+  babyId: string,
 ): Promise<BabyCollaborator[]> {
   try {
     const response = await get<BabyCollaborator[]>(
-      `/babies/${babyId}/collaborators`
+      `/babies/${babyId}/collaborators`,
     );
     return response.data || [];
   } catch (error) {
-    console.error('[Collaborator] 获取协作者列表失败:', error);
+    console.error("[Collaborator] 获取协作者列表失败:", error);
     throw error;
   }
 }
@@ -39,21 +39,21 @@ export async function apiFetchCollaborators(
  */
 export async function apiInviteCollaborator(
   babyId: string,
-  data: InviteCollaboratorRequest
+  data: InviteCollaboratorRequest,
 ): Promise<InviteCollaboratorResponse> {
   try {
     const response = await post<InviteCollaboratorResponse>(
       `/babies/${babyId}/collaborators/invite`,
-      data
+      data,
     );
 
     if (response.code !== 0) {
-      throw new Error(response.message || '邀请失败');
+      throw new Error(response.message || "邀请失败");
     }
 
     return response.data;
   } catch (error) {
-    console.error('[Collaborator] 邀请协作者失败:', error);
+    console.error("[Collaborator] 邀请协作者失败:", error);
     throw error;
   }
 }
@@ -66,18 +66,16 @@ export async function apiInviteCollaborator(
  */
 export async function apiRemoveCollaborator(
   babyId: string,
-  openid: string
+  openid: string,
 ): Promise<void> {
   try {
-    const response = await del(
-      `/babies/${babyId}/collaborators/${openid}`
-    );
+    const response = await del(`/babies/${babyId}/collaborators/${openid}`);
 
     if (response.code !== 0) {
-      throw new Error(response.message || '移除失败');
+      throw new Error(response.message || "移除失败");
     }
   } catch (error) {
-    console.error('[Collaborator] 移除协作者失败:', error);
+    console.error("[Collaborator] 移除协作者失败:", error);
     throw error;
   }
 }
@@ -93,8 +91,8 @@ export async function apiRemoveCollaborator(
 export async function apiUpdateCollaboratorRole(
   babyId: string,
   openid: string,
-  role: 'admin' | 'editor' | 'viewer',
-  expiresAt?: number
+  role: "admin" | "editor" | "viewer",
+  expiresAt?: number,
 ): Promise<void> {
   try {
     const payload: any = { role };
@@ -104,14 +102,14 @@ export async function apiUpdateCollaboratorRole(
 
     const response = await put(
       `/babies/${babyId}/collaborators/${openid}/role`,
-      payload
+      payload,
     );
 
     if (response.code !== 0) {
-      throw new Error(response.message || '更新失败');
+      throw new Error(response.message || "更新失败");
     }
   } catch (error) {
-    console.error('[Collaborator] 更新协作者角色失败:', error);
+    console.error("[Collaborator] 更新协作者角色失败:", error);
     throw error;
   }
 }
@@ -127,12 +125,12 @@ export async function apiGetInvitationByCode(shortCode: string) {
     const response = await get(`/invitations/code/${shortCode}`);
 
     if (response.code !== 0) {
-      throw new Error(response.message || '获取邀请详情失败');
+      throw new Error(response.message || "获取邀请详情失败");
     }
 
     return response.data;
   } catch (error) {
-    console.error('[Collaborator] 获取邀请详情失败:', error);
+    console.error("[Collaborator] 获取邀请详情失败:", error);
     throw error;
   }
 }
@@ -143,23 +141,20 @@ export async function apiGetInvitationByCode(shortCode: string) {
  * @param babyId - 宝宝ID
  * @param token - 邀请token
  */
-export async function apiJoinBaby(
-  babyId: string,
-  token: string
-): Promise<any> {
+export async function apiJoinBaby(babyId: string, token: string): Promise<any> {
   try {
-    const response = await post('/babies/join', {
+    const response = await post("/babies/join", {
       babyId,
       token,
     });
 
     if (response.code !== 0) {
-      throw new Error(response.message || '加入失败');
+      throw new Error(response.message || "加入失败");
     }
 
     return response.data;
   } catch (error) {
-    console.error('[Collaborator] 加入宝宝失败:', error);
+    console.error("[Collaborator] 加入宝宝失败:", error);
     throw error;
   }
 }
@@ -172,21 +167,21 @@ export async function apiJoinBaby(
  */
 export async function apiBatchInviteCollaborators(
   babyId: string,
-  invitations: InviteCollaboratorRequest[]
+  invitations: InviteCollaboratorRequest[],
 ): Promise<InviteCollaboratorResponse[]> {
   try {
     const response = await post<InviteCollaboratorResponse[]>(
       `/babies/${babyId}/collaborators/batch-invite`,
-      { invitations }
+      { invitations },
     );
 
     if (response.code !== 0) {
-      throw new Error(response.message || '批量邀请失败');
+      throw new Error(response.message || "批量邀请失败");
     }
 
     return response.data || [];
   } catch (error) {
-    console.error('[Collaborator] 批量邀请失败:', error);
+    console.error("[Collaborator] 批量邀请失败:", error);
     throw error;
   }
 }

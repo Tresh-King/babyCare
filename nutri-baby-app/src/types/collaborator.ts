@@ -10,8 +10,8 @@ export interface BabyCollaborator {
   openid: string;
   nickName: string;
   avatarUrl?: string;
-  role: 'admin' | 'editor' | 'viewer';
-  accessType: 'permanent' | 'temporary';
+  role: "admin" | "editor" | "viewer";
+  accessType: "permanent" | "temporary";
   expiresAt?: number;
   joinedAt: number;
   isCreator: boolean;
@@ -23,8 +23,8 @@ export interface BabyCollaborator {
  */
 export interface MyPermission {
   babyId: string;
-  role: 'admin' | 'editor' | 'viewer';
-  accessType: 'permanent' | 'temporary';
+  role: "admin" | "editor" | "viewer";
+  accessType: "permanent" | "temporary";
   expiresAt?: number;
   joinedAt: number;
 }
@@ -33,7 +33,7 @@ export interface MyPermission {
  * 角色权限定义
  */
 export interface RolePermissions {
-  role: 'admin' | 'editor' | 'viewer';
+  role: "admin" | "editor" | "viewer";
   label: string;
   description: string;
   permissions: string[];
@@ -45,9 +45,9 @@ export interface RolePermissions {
 export interface InviteCollaboratorRequest {
   targetOpenid?: string;
   targetPhone?: string;
-  role: 'admin' | 'editor' | 'viewer';
+  role: "admin" | "editor" | "viewer";
   expiresAt?: number;
-  accessType: 'permanent' | 'temporary';
+  accessType: "permanent" | "temporary";
   relationship?: string; // 与宝宝的关系
 }
 
@@ -67,42 +67,42 @@ export interface InviteCollaboratorResponse {
  */
 export const ROLE_PERMISSIONS: Record<string, RolePermissions> = {
   admin: {
-    role: 'admin',
-    label: '管理员',
-    description: '拥有完全控制权',
+    role: "admin",
+    label: "管理员",
+    description: "拥有完全控制权",
     permissions: [
-      'viewBaby',
-      'viewRecords',
-      'viewCollaborators',
-      'addRecord',
-      'editRecord',
-      'deleteRecord',
-      'editBaby',
-      'deleteBaby',
-      'inviteCollaborator',
-      'removeCollaborator',
-      'updateCollaboratorRole',
+      "viewBaby",
+      "viewRecords",
+      "viewCollaborators",
+      "addRecord",
+      "editRecord",
+      "deleteRecord",
+      "editBaby",
+      "deleteBaby",
+      "inviteCollaborator",
+      "removeCollaborator",
+      "updateCollaboratorRole",
     ],
   },
   editor: {
-    role: 'editor',
-    label: '编辑者',
-    description: '可查看和编辑记录',
+    role: "editor",
+    label: "编辑者",
+    description: "可查看和编辑记录",
     permissions: [
-      'viewBaby',
-      'viewRecords',
-      'viewCollaborators',
-      'addRecord',
-      'editRecord',
-      'deleteRecord',
-      'inviteCollaborator',
+      "viewBaby",
+      "viewRecords",
+      "viewCollaborators",
+      "addRecord",
+      "editRecord",
+      "deleteRecord",
+      "inviteCollaborator",
     ],
   },
   viewer: {
-    role: 'viewer',
-    label: '查看者',
-    description: '仅可查看数据',
-    permissions: ['viewBaby', 'viewRecords', 'viewCollaborators'],
+    role: "viewer",
+    label: "查看者",
+    description: "仅可查看数据",
+    permissions: ["viewBaby", "viewRecords", "viewCollaborators"],
   },
 };
 
@@ -110,18 +110,18 @@ export const ROLE_PERMISSIONS: Record<string, RolePermissions> = {
  * 权限访问类型
  */
 export interface AccessType {
-  type: 'permanent' | 'temporary';
+  type: "permanent" | "temporary";
   label: string;
 }
 
 export const ACCESS_TYPES: Record<string, AccessType> = {
   permanent: {
-    type: 'permanent',
-    label: '永久有效',
+    type: "permanent",
+    label: "永久有效",
   },
   temporary: {
-    type: 'temporary',
-    label: '有期限',
+    type: "temporary",
+    label: "有期限",
   },
 };
 
@@ -129,7 +129,7 @@ export const ACCESS_TYPES: Record<string, AccessType> = {
  * 计算权限是否过期
  */
 export function isPermissionExpired(permission: MyPermission): boolean {
-  if (permission.accessType === 'permanent') {
+  if (permission.accessType === "permanent") {
     return false;
   }
   if (!permission.expiresAt) {
@@ -143,7 +143,7 @@ export function isPermissionExpired(permission: MyPermission): boolean {
  */
 export function hasPermission(
   permission: MyPermission | undefined,
-  action: string
+  action: string,
 ): boolean {
   if (!permission) return false;
   if (isPermissionExpired(permission)) return false;
@@ -159,14 +159,14 @@ export function hasPermission(
  */
 export function getPermissionText(permission: MyPermission): string {
   if (isPermissionExpired(permission)) {
-    return '权限已过期';
+    return "权限已过期";
   }
 
   const roleLabel = ROLE_PERMISSIONS[permission.role]?.label || permission.role;
 
-  if (permission.accessType === 'temporary' && permission.expiresAt) {
+  if (permission.accessType === "temporary" && permission.expiresAt) {
     const expiresDate = new Date(permission.expiresAt * 1000);
-    return `${roleLabel} · 有效期至 ${expiresDate.toLocaleDateString('zh-CN')}`;
+    return `${roleLabel} · 有效期至 ${expiresDate.toLocaleDateString("zh-CN")}`;
   }
 
   return `${roleLabel} · 永久有效`;
@@ -177,5 +177,5 @@ export function getPermissionText(permission: MyPermission): string {
  */
 export function formatJoinedDate(timestamp: number): string {
   const date = new Date(timestamp * 1000);
-  return date.toLocaleDateString('zh-CN');
+  return date.toLocaleDateString("zh-CN");
 }

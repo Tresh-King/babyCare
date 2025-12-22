@@ -8,12 +8,12 @@
  * - 每个亲友可以设置与宝宝的关系: 爸爸、妈妈、爷爷、奶奶等
  * - 支持永久和临时访问权限
  */
-import { ref } from 'vue'
-import type { BabyCollaborator } from '@/types'
-import { get, post, put, del } from '@/utils/request'
+import { ref } from "vue";
+import type { BabyCollaborator } from "@/types";
+import { get, post, put, del } from "@/utils/request";
 
 // 当前宝宝的协作者列表 (按需加载)
-const collaborators = ref<Map<string, BabyCollaborator[]>>(new Map())
+const collaborators = ref<Map<string, BabyCollaborator[]>>(new Map());
 
 /**
  * 获取宝宝的协作者列表
@@ -21,20 +21,24 @@ const collaborators = ref<Map<string, BabyCollaborator[]>>(new Map())
  * API: GET /babies/{babyId}/collaborators
  * 响应: [ { openid, nickName, avatarUrl, role, accessType, expiresAt?, joinTime } ]
  */
-export async function fetchCollaborators(babyId: string): Promise<BabyCollaborator[]> {
+export async function fetchCollaborators(
+  babyId: string,
+): Promise<BabyCollaborator[]> {
   try {
-    const response = await get<BabyCollaborator[]>(`/babies/${babyId}/collaborators`)
+    const response = await get<BabyCollaborator[]>(
+      `/babies/${babyId}/collaborators`,
+    );
 
     if (response.code === 0 && response.data) {
-      const collaboratorList = response.data
-      collaborators.value.set(babyId, collaboratorList)
-      return collaboratorList
+      const collaboratorList = response.data;
+      collaborators.value.set(babyId, collaboratorList);
+      return collaboratorList;
     } else {
-      throw new Error(response.message || '获取协作者列表失败')
+      throw new Error(response.message || "获取协作者列表失败");
     }
   } catch (error: any) {
-    console.error('fetch collaborators error:', error)
-    throw error
+    console.error("fetch collaborators error:", error);
+    throw error;
   }
 }
 
@@ -52,49 +56,49 @@ export async function fetchCollaborators(babyId: string): Promise<BabyCollaborat
  */
 export async function inviteCollaborator(
   babyId: string,
-  inviteType: 'share' | 'qrcode',
-  role: 'admin' | 'editor' | 'viewer',
-  accessType: 'permanent' | 'temporary',
+  inviteType: "share" | "qrcode",
+  role: "admin" | "editor" | "viewer",
+  accessType: "permanent" | "temporary",
   expiresAt?: number,
-  relationship?: string
+  relationship?: string,
 ): Promise<any> {
   try {
     const requestData: any = {
       inviteType,
       role,
       accessType,
-    }
+    };
 
-    if (accessType === 'temporary' && expiresAt) {
-      requestData.expiresAt = expiresAt
+    if (accessType === "temporary" && expiresAt) {
+      requestData.expiresAt = expiresAt;
     }
 
     if (relationship) {
-      requestData.relationship = relationship
+      requestData.relationship = relationship;
     }
 
     const response = await post<any>(
       `/babies/${babyId}/collaborators/invite`,
-      requestData
-    )
+      requestData,
+    );
 
     if (response.code === 0 && response.data) {
       uni.showToast({
-        title: '邀请生成成功',
-        icon: 'success',
-      })
+        title: "邀请生成成功",
+        icon: "success",
+      });
 
-      return response.data
+      return response.data;
     } else {
-      throw new Error(response.message || '生成邀请失败')
+      throw new Error(response.message || "生成邀请失败");
     }
   } catch (error: any) {
-    console.error('invite collaborator error:', error)
+    console.error("invite collaborator error:", error);
     uni.showToast({
-      title: error.message || '生成邀请失败',
-      icon: 'none',
-    })
-    throw error
+      title: error.message || "生成邀请失败",
+      icon: "none",
+    });
+    throw error;
   }
 }
 
@@ -107,31 +111,31 @@ export async function inviteCollaborator(
  */
 export async function joinBabyCollaboration(
   babyId: string,
-  token: string
+  token: string,
 ): Promise<{ babyId: string; name: string; role: string }> {
   try {
-    const response = await post<any>('/babies/join', {
+    const response = await post<any>("/babies/join", {
       babyId,
       token,
-    })
+    });
 
     if (response.code === 0 && response.data) {
       uni.showToast({
-        title: '加入成功',
-        icon: 'success',
-      })
+        title: "加入成功",
+        icon: "success",
+      });
 
-      return response.data
+      return response.data;
     } else {
-      throw new Error(response.message || '加入失败')
+      throw new Error(response.message || "加入失败");
     }
   } catch (error: any) {
-    console.error('join baby collaboration error:', error)
+    console.error("join baby collaboration error:", error);
     uni.showToast({
-      title: error.message || '加入失败',
-      icon: 'none',
-    })
-    throw error
+      title: error.message || "加入失败",
+      icon: "none",
+    });
+    throw error;
   }
 }
 
@@ -143,38 +147,38 @@ export async function joinBabyCollaboration(
  */
 export async function removeCollaborator(
   babyId: string,
-  openid: string
+  openid: string,
 ): Promise<boolean> {
   try {
-    const response = await del(`/babies/${babyId}/collaborators/${openid}`)
+    const response = await del(`/babies/${babyId}/collaborators/${openid}`);
 
     if (response.code === 0) {
       // 从本地缓存中移除
-      const list = collaborators.value.get(babyId)
+      const list = collaborators.value.get(babyId);
       if (list) {
-        const index = list.findIndex(c => c.openid === openid)
+        const index = list.findIndex((c) => c.openid === openid);
         if (index !== -1) {
-          list.splice(index, 1)
-          collaborators.value.set(babyId, [...list])
+          list.splice(index, 1);
+          collaborators.value.set(babyId, [...list]);
         }
       }
 
       uni.showToast({
-        title: '移除成功',
-        icon: 'success',
-      })
+        title: "移除成功",
+        icon: "success",
+      });
 
-      return true
+      return true;
     } else {
-      throw new Error(response.message || '移除协作者失败')
+      throw new Error(response.message || "移除协作者失败");
     }
   } catch (error: any) {
-    console.error('remove collaborator error:', error)
+    console.error("remove collaborator error:", error);
     uni.showToast({
-      title: error.message || '移除失败',
-      icon: 'none',
-    })
-    throw error
+      title: error.message || "移除失败",
+      icon: "none",
+    });
+    throw error;
   }
 }
 
@@ -188,41 +192,41 @@ export async function removeCollaborator(
 export async function updateCollaboratorRole(
   babyId: string,
   openid: string,
-  role: 'admin' | 'editor' | 'viewer'
+  role: "admin" | "editor" | "viewer",
 ): Promise<boolean> {
   try {
     const response = await put(
       `/babies/${babyId}/collaborators/${openid}/role`,
-      { role }
-    )
+      { role },
+    );
 
     if (response.code === 0) {
       // 更新本地缓存
-      const list = collaborators.value.get(babyId)
+      const list = collaborators.value.get(babyId);
       if (list) {
-        const collaborator = list.find(c => c.openid === openid)
+        const collaborator = list.find((c) => c.openid === openid);
         if (collaborator) {
-          collaborator.role = role
-          collaborators.value.set(babyId, [...list])
+          collaborator.role = role;
+          collaborators.value.set(babyId, [...list]);
         }
       }
 
       uni.showToast({
-        title: '角色更新成功',
-        icon: 'success',
-      })
+        title: "角色更新成功",
+        icon: "success",
+      });
 
-      return true
+      return true;
     } else {
-      throw new Error(response.message || '更新角色失败')
+      throw new Error(response.message || "更新角色失败");
     }
   } catch (error: any) {
-    console.error('update collaborator role error:', error)
+    console.error("update collaborator role error:", error);
     uni.showToast({
-      title: error.message || '更新失败',
-      icon: 'none',
-    })
-    throw error
+      title: error.message || "更新失败",
+      icon: "none",
+    });
+    throw error;
   }
 }
 
@@ -238,46 +242,46 @@ export async function updateCollaboratorRole(
 export async function updateFamilyMember(
   babyId: string,
   openid: string,
-  data: { role?: 'admin' | 'editor' | 'viewer'; relationship?: string }
+  data: { role?: "admin" | "editor" | "viewer"; relationship?: string },
 ): Promise<boolean> {
   try {
     const response = await put(
       `/babies/${babyId}/collaborators/${openid}`,
-      data
-    )
+      data,
+    );
 
     if (response.code === 0) {
       // 更新本地缓存
-      const list = collaborators.value.get(babyId)
+      const list = collaborators.value.get(babyId);
       if (list) {
-        const collaborator = list.find(c => c.openid === openid)
+        const collaborator = list.find((c) => c.openid === openid);
         if (collaborator) {
           if (data.role) {
-            collaborator.role = data.role
+            collaborator.role = data.role;
           }
           if (data.relationship !== undefined) {
-            collaborator.relationship = data.relationship
+            collaborator.relationship = data.relationship;
           }
-          collaborators.value.set(babyId, [...list])
+          collaborators.value.set(babyId, [...list]);
         }
       }
 
       uni.showToast({
-        title: '更新成功',
-        icon: 'success',
-      })
+        title: "更新成功",
+        icon: "success",
+      });
 
-      return true
+      return true;
     } else {
-      throw new Error(response.message || '更新失败')
+      throw new Error(response.message || "更新失败");
     }
   } catch (error: any) {
-    console.error('update family member error:', error)
+    console.error("update family member error:", error);
     uni.showToast({
-      title: error.message || '更新失败',
-      icon: 'none',
-    })
-    throw error
+      title: error.message || "更新失败",
+      icon: "none",
+    });
+    throw error;
   }
 }
 
@@ -285,7 +289,7 @@ export async function updateFamilyMember(
  * 获取本地缓存的协作者列表
  */
 export function getCollaborators(babyId: string): BabyCollaborator[] {
-  return collaborators.value.get(babyId) || []
+  return collaborators.value.get(babyId) || [];
 }
 
 /**
@@ -293,10 +297,10 @@ export function getCollaborators(babyId: string): BabyCollaborator[] {
  */
 export function clearCollaborators(babyId?: string) {
   if (babyId) {
-    collaborators.value.delete(babyId)
+    collaborators.value.delete(babyId);
   } else {
-    collaborators.value.clear()
+    collaborators.value.clear();
   }
 }
 
-export { collaborators }
+export { collaborators };

@@ -21,7 +21,7 @@
             :width="200"
             :radius="90"
             show-percent
-            percent-text-size="48"
+            :percent-text-size="48"
             percent-text-color="#333333"
           />
         </view>
@@ -32,11 +32,11 @@
         </view>
       </view>
 
-      <view class="score-details" v-if="details && details.length">
+      <view v-if="details && details.length" class="score-details">
         <view
-          class="detail-item"
           v-for="(detail, index) in details"
           :key="index"
+          class="detail-item"
         >
           <view class="detail-icon">{{ getDetailIcon(detail.type) }}</view>
           <view class="detail-content">
@@ -49,144 +49,121 @@
           <view class="detail-progress">
             <view
               class="progress-bar"
-              :style="{ width: `${detail.score}%`, backgroundColor: getDetailColor(detail.score) }"
+              :style="{
+                width: `${detail.score}%`,
+                backgroundColor: getDetailColor(detail.score),
+              }"
             />
           </view>
         </view>
       </view>
     </view>
 
-    <view class="score-actions" v-if="showActions">
-      <nut-button
-        type="primary"
-        size="small"
-        @tap="handleRefresh"
-      >
+    <view v-if="showActions" class="score-actions">
+      <nut-button type="primary" size="small" @tap="handleRefresh">
         重新分析
       </nut-button>
-      <nut-button
-        size="small"
-        @tap="handleDetail"
-      >
-        查看详情
-      </nut-button>
+      <nut-button size="small" @tap="handleDetail"> 查看详情 </nut-button>
     </view>
   </view>
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
-import CircleProgress from '@/components/common/CircleProgress.vue'
+import { computed } from "vue";
+import CircleProgress from "@/components/common/CircleProgress.vue";
 
 interface DetailItem {
-  type: string
-  name: string
-  score: number
+  type: string;
+  name: string;
+  score: number;
 }
 
 interface Props {
-  title: string
-  score: number
-  details?: DetailItem[]
-  showActions?: boolean
-  size?: 'small' | 'medium' | 'large'
+  title: string;
+  score: number;
+  details?: DetailItem[];
+  showActions?: boolean;
+  size?: "small" | "medium" | "large";
 }
 
 const props = withDefaults(defineProps<Props>(), {
   details: () => [],
   showActions: false,
-  size: 'medium'
-})
+  size: "medium",
+});
 
-const emit = defineEmits(['refresh', 'detail'])
+const emit = defineEmits(["refresh", "detail"]);
 
 // 获取评分图标
 const getScoreIcon = (): string => {
-  if (props.score >= 90) return '🏆'
-  if (props.score >= 80) return '⭐'
-  if (props.score >= 70) return '👍'
-  if (props.score >= 60) return '😐'
-  return '⚠️'
-}
+  if (props.score >= 90) return "🏆";
+  if (props.score >= 80) return "⭐";
+  if (props.score >= 70) return "👍";
+  if (props.score >= 60) return "😐";
+  return "⚠️";
+};
 
 // 获取评分颜色
 const getScoreColor = (): string => {
-  if (props.score >= 90) return '#52c41a'  // 优秀 - 绿色
-  if (props.score >= 80) return '#7dd3a2'  // 良好 - 浅绿
-  if (props.score >= 70) return '#ffa940'  // 一般 - 橙色
-  if (props.score >= 60) return '#faad14'  // 及格 - 黄色
-  return '#ff4d4f'  // 不及格 - 红色
-}
+  if (props.score >= 90) return "#52c41a"; // 优秀 - 绿色
+  if (props.score >= 80) return "#7dd3a2"; // 良好 - 浅绿
+  if (props.score >= 70) return "#ffa940"; // 一般 - 橙色
+  if (props.score >= 60) return "#faad14"; // 及格 - 黄色
+  return "#ff4d4f"; // 不及格 - 红色
+};
 
 // 获取评分等级
 const getScoreLevel = (): string => {
-  if (props.score >= 90) return '优秀'
-  if (props.score >= 80) return '良好'
-  if (props.score >= 70) return '一般'
-  if (props.score >= 60) return '及格'
-  return '需改善'
-}
+  if (props.score >= 90) return "优秀";
+  if (props.score >= 80) return "良好";
+  if (props.score >= 70) return "一般";
+  if (props.score >= 60) return "及格";
+  return "需改善";
+};
 
 // 获取评分描述
 const getScoreDescription = (): string => {
-  if (props.score >= 90) return '表现非常出色'
-  if (props.score >= 80) return '整体表现良好'
-  if (props.score >= 70) return '基本符合预期'
-  if (props.score >= 60) return '需要关注改进'
-  return '需要重点关注'
-}
+  if (props.score >= 90) return "表现非常出色";
+  if (props.score >= 80) return "整体表现良好";
+  if (props.score >= 70) return "基本符合预期";
+  if (props.score >= 60) return "需要关注改进";
+  return "需要重点关注";
+};
 
 // 获取详情图标
 const getDetailIcon = (type: string): string => {
   const iconMap: Record<string, string> = {
-    feeding: '🍼',
-    sleep: '😴',
-    growth: '📈',
-    health: '❤️',
-    behavior: '🧠',
-    regularity: '⏰',
-    adequacy: '✅',
-    timeliness: '⚡',
-    diversity: '🌈'
-  }
-  return iconMap[type] || '📊'
-}
+    feeding: "🍼",
+    sleep: "😴",
+    growth: "📈",
+    health: "❤️",
+    behavior: "🧠",
+    regularity: "⏰",
+    adequacy: "✅",
+    timeliness: "⚡",
+    diversity: "🌈",
+  };
+  return iconMap[type] || "📊";
+};
 
 // 获取详情颜色
 const getDetailColor = (score: number): string => {
-  if (score >= 90) return '#52c41a'
-  if (score >= 80) return '#7dd3a2'
-  if (score >= 70) return '#ffa940'
-  if (score >= 60) return '#faad14'
-  return '#ff4d4f'
-}
+  if (score >= 90) return "#52c41a";
+  if (score >= 80) return "#7dd3a2";
+  if (score >= 70) return "#ffa940";
+  if (score >= 60) return "#faad14";
+  return "#ff4d4f";
+};
 
 // 处理刷新
 const handleRefresh = () => {
-  emit('refresh')
-}
+  emit("refresh");
+};
 
 // 处理详情
 const handleDetail = () => {
-  emit('detail')
-}
-
-// 计算属性
-const circleSize = computed(() => {
-  switch (props.size) {
-    case 'small': return 150
-    case 'large': return 250
-    default: return 200
-  }
-})
-
-const progressSize = computed(() => {
-  switch (props.size) {
-    case 'small': return 6
-    case 'large': return 16
-    default: return 12
-  }
-})
+  emit("detail");
+};
 </script>
 
 <style lang="scss" scoped>
@@ -549,6 +526,7 @@ const progressSize = computed(() => {
 }
 </style>
 
+<!-- 圆环进度条组件 -->
 <style lang="scss">
 // 响应式布局
 @media (max-width: 375px) {
@@ -572,21 +550,3 @@ const progressSize = computed(() => {
   }
 }
 </style>
-
-<!-- 圆环进度条组件 -->
-<script lang="ts">
-// 这里应该引入实际的圆环进度条组件
-// 由于NutUI没有直接的圆环进度条，这里用占位符
-// 实际项目中可以使用第三方组件或自定义实现
-interface CircleProgressProps {
-  percent: number
-  strokeWidth?: number
-  strokeColor?: string
-  trailColor?: string
-  width?: number
-  radius?: number
-  showPercent?: boolean
-  percentTextSize?: number
-  percentTextColor?: string
-}
-</script>
