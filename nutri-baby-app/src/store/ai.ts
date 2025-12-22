@@ -246,7 +246,7 @@ export const useAIStore = () => {
 
       // 直接赋值新对象触发ref更新
       dailyTips.value = { ...dailyTips.value, [targetDate]: response.data.tips }
-      console.log('✅ 已生成并保存每日建议:', targetDate, response.data.tips.length, '条')
+      // console.log('✅ 已生成并保存每日建议:', targetDate, response.data.tips.length, '条')
 
       return response.data.tips
     } catch (error: any) {
@@ -279,8 +279,7 @@ export const useAIStore = () => {
 
         // 直接赋值新对象触发ref更新
         dailyTips.value = { ...dailyTips.value, [targetDate]: response.data.tips }
-        console.log('✅ 已从API获取并保存每日建议:', targetDate, response.data.tips.length, '条')
-        console.log('📊 当前dailyTips keys:', Object.keys(dailyTips.value))
+        // console.log('✅ 已从API获取并保存每日建议:', targetDate, response.data.tips.length, '条')
 
         return response.data.tips
       } catch (error: any) {

@@ -211,12 +211,12 @@ func Load(configPath string) (*Config, error) {
 
 			v.SetConfigFile(examplePath)
 			if err := v.ReadInConfig(); err != nil {
-				fmt.Printf("Warning: Both config and example failed. Relying on env vars.\n")
+				// 如果两个都失败，且没有环境变量，那也没办法，只能返回错误或者依赖 safe defaults
 			} else {
-				fmt.Printf("Info: Successfully loaded structure from %s\n", examplePath)
+				//fmt.Printf("Info: Successfully loaded structure from %s\n", examplePath)
 			}
 		} else {
-			fmt.Printf("Info: Successfully loaded config from %s\n", configPath)
+			//fmt.Printf("Info: Successfully loaded config from %s\n", configPath)
 		}
 	}
 
