@@ -49,7 +49,7 @@ export const useAIStore = () => {
   })
 
   const todayTips = computed(() => {
-    const today: string = new Date().toISOString().split('T')[0]
+    const today: string = new Date().toISOString().split('T')[0] || ''
     return dailyTips.value[today] || []
   })
 
@@ -116,7 +116,7 @@ export const useAIStore = () => {
       const result = await apiPollAnalysisStatus(analysisId.toString(), (status, progress, message) => {
         // 更新分析状态
         if (analyses[analysisId]) {
-          analyses[analysisId].status = status as AIAnalysisStatus
+          analyses[analysisId]!.status = status as AIAnalysisStatus
         }
         console.log(`分析${analysisId}状态更新: ${status}, 进度: ${progress}%, 消息: ${message}`)
       })
@@ -124,7 +124,7 @@ export const useAIStore = () => {
       // 更新完整分析结果
       if (result.result && analyses[analysisId]) {
         analyses[analysisId] = {
-          ...analyses[analysisId],
+          ...analyses[analysisId]!,
           status: result.status as AIAnalysisStatus,
           result: result.result,
           score: result.result.score,
@@ -133,6 +133,7 @@ export const useAIStore = () => {
           updated_at: new Date().toISOString()
         }
       }
+
 
       // 从分析中移除
       analyzingIds.delete(analysisId)
@@ -143,8 +144,8 @@ export const useAIStore = () => {
 
       // 更新为失败状态
       if (analyses[analysisId]) {
-        analyses[analysisId].status = 'failed'
-        analyses[analysisId].updated_at = new Date().toISOString()
+        analyses[analysisId]!.status = 'failed'
+        analyses[analysisId]!.updated_at = new Date().toISOString()
       }
 
       analyzingIds.delete(analysisId)
@@ -162,20 +163,20 @@ export const useAIStore = () => {
 
       // 更新本地缓存
       if (analyses[analysisId]) {
-        analyses[analysisId].status = analysisData.status as AIAnalysisStatus
+        analyses[analysisId]!.status = analysisData.status as AIAnalysisStatus
         if (analysisData.result) {
-          analyses[analysisId].result = analysisData.result
-          analyses[analysisId].score = analysisData.result.score
-          analyses[analysisId].insights = analysisData.result.insights?.map(insight => JSON.stringify(insight))
-          analyses[analysisId].alerts = analysisData.result.alerts?.map(alert => JSON.stringify(alert))
+          analyses[analysisId]!.result = analysisData.result
+          analyses[analysisId]!.score = analysisData.result.score
+          analyses[analysisId]!.insights = analysisData.result.insights?.map(insight => JSON.stringify(insight))
+          analyses[analysisId]!.alerts = analysisData.result.alerts?.map(alert => JSON.stringify(alert))
         }
-        analyses[analysisId].updated_at = new Date().toISOString()
+        analyses[analysisId]!.updated_at = new Date().toISOString()
       }
 
       if (!analyses[analysisId]) {
         throw new Error('分析记录不存在')
       }
-      return analyses[analysisId]
+      return analyses[analysisId]!
     } catch (error) {
       console.error('获取分析结果失败:', error)
       throw error

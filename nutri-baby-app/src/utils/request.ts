@@ -83,13 +83,12 @@ export function request<T = any>(config: RequestConfig): Promise<ApiResponse<T>>
  */
 function requestAdapter(config: Omit<RequestConfig, 'retry' | 'retryDelay' | 'showError'>): Promise<any> {
   // 检查是否在微信小程序环境且配置了云环境ID
-  // @ts-ignore
   const isWechatMp = typeof wx !== 'undefined' && !!wx.cloud
 
   if (isWechatMp && CLOUD_ENV_ID) {
     return new Promise((resolve, reject) => {
-      // @ts-ignore
-      wx.cloud.init({ env: CLOUD_ENV_ID }) // 确保初始化
+      // 确保初始化
+      wx.cloud.init({ env: CLOUD_ENV_ID })
 
       // 构造云托管路径：/v1/auth/login
       // callContainer 不需要完整的域名，只需要 path
@@ -112,7 +111,6 @@ function requestAdapter(config: Omit<RequestConfig, 'retry' | 'retryDelay' | 'sh
         path += buildQueryString(config.data)
       }
 
-      // @ts-ignore
       wx.cloud.callContainer({
         config: {
           env: CLOUD_ENV_ID
